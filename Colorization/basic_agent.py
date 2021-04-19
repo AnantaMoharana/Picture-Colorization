@@ -51,16 +51,16 @@ def get_testing_data(image): #right half of the image
     return testing_data
 
 
-    def loadImage(self, filename):
-        with Image.open(filename).convert('RGB') as picture:
-            imageWidth, imageHeight = picture.size
-        pixels = picture.load()
+def loadImage(self, filename):
+    with Image.open(filename).convert('RGB') as picture:
+        imageWidth, imageHeight = picture.size
+    pixels = picture.load()
 
-        for i in range(int(imageWidth/2), imageWidth):
-            for j in range(0,imageHeight):
-                RGB_Val = int(.21*pixels[i, j][0] + .72*pixels[i, j][1] + .07*pixels[i, j][2])
-                pixels[i,j] = (RGB_Val, RGB_Val, RGB_Val)
-        picture.show()
+    for i in range(int(imageWidth/2), imageWidth):
+        for j in range(0,imageHeight):
+            RGB_Val = int(.21*pixels[i, j][0] + .72*pixels[i, j][1] + .07*pixels[i, j][2])
+            pixels[i,j] = (RGB_Val, RGB_Val, RGB_Val)
+    picture.show()
 
 
 

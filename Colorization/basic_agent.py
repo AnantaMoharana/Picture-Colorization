@@ -3,6 +3,7 @@ from numpy.lib.function_base import diff
 from skimage import io, color
 import matplotlib.pyplot as plt
 from collections import Counter
+from PIL import Image
 
 def basic_agent(image):
 
@@ -48,6 +49,18 @@ def get_testing_data(image): #right half of the image
     testing_data=np.array(test_rows)
 
     return testing_data
+
+
+    def loadImage(self, filename):
+        with Image.open(filename).convert('RGB') as picture:
+            imageWidth, imageHeight = picture.size
+        pixels = picture.load()
+
+        for i in range(int(imageWidth/2), imageWidth):
+            for j in range(0,imageHeight):
+                RGB_Val = int(.21*pixels[i, j][0] + .72*pixels[i, j][1] + .07*pixels[i, j][2])
+                pixels[i,j] = (RGB_Val, RGB_Val, RGB_Val)
+        picture.show()
 
 
 

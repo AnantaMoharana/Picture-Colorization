@@ -86,7 +86,7 @@ def Kmeans_get_centroids(left_half_training):
         for j in range(left_half_training.shape[1]):
 
             #compute the distance for each of the centroids
-
+            minimum_distance=math.inf
             for val in centroid_vals:
                 distance=color_distance(left_half_training[i][j],val)
 
@@ -96,29 +96,50 @@ def Kmeans_get_centroids(left_half_training):
 
             for centroid in centroids:
                 if np.array_equal(centroid[0],cluster_assignment):
-                    centroid[1].append
+                    centroid[1].append(left_half_training[i][j])
                     break
             
     
-
 
 
     print("progress")
     
     
 
-def averge_recalculation(centroid):
+def averge_recalculation(centroid, centroid_vals):    #compute new Centroids
     print("Recomputing Clusters")
+    new_centers_kmeans=[]
+    centroid=[]
+    for colors  in centroid:
+        counter = 0
+        red=0
+        green=0
+        blue=0
+        for rgb in colors[1]:
+            red+=rgb[0]
+            green+=rgb[1]
+            blue+=rgb[2]
+            counter+=1
+        new_center=[red/counter,green/counter,blue/counter]
+        new_centers_kmeans.append(new_center)
+        centroid.append((new_center,[]))
+    
+    return centroid, new_centers_kmeans
+
+
+
+
+        
 
 
 def color_distance(start, end): #formula from lecture 20 notes
     #print("Color Distance From Lecture 20 Notes")
 
-    red=2*(start[0]-start[0])**2
+    red=2*(start[0]-end[0])**2
 
-    green=4*(start[1]-start[1])**2
+    green=4*(start[1]-end[1])**2
 
-    blue=3*(start[2]-start[2])**2
+    blue=3*(start[2]-end[2])**2
 
     distance=math.sqrt(red+green+blue)
 

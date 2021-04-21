@@ -95,7 +95,7 @@ def Kmeans_get_centroids(left_half_training):
                     cluster_assignment=val
 
             for centroid in centroids:
-                if centroid[0]==cluster_assignment:
+                if np.array_equal(centroid[0],cluster_assignment):
                     centroid[1].append
                     break
             
@@ -107,12 +107,12 @@ def Kmeans_get_centroids(left_half_training):
     
     
 
-def averge_recalculation():
+def averge_recalculation(centroid):
     print("Recomputing Clusters")
 
 
 def color_distance(start, end): #formula from lecture 20 notes
-    print("Color Distance From Lecture 20 Notes")
+    #print("Color Distance From Lecture 20 Notes")
 
     red=2*(start[0]-start[0])**2
 

@@ -4,23 +4,170 @@ from skimage import io, color
 import matplotlib.pyplot as plt
 import random
 import math
+from queue import PriorityQueue
+import collections
 from PIL import Image
 
-def basic_agent(left_half_training):
+def basic_agent(left_half_training, right_testing_data):
 
     #print('Basic Agent')
+    Left_training_grey_scale=np.copy(left_half_training)
+    set_to_grey_scale(Left_training_grey_scale)
+    set_to_grey_scale(right_testing_data)
     centroids_with_coordinates, centroid_vals=k_means(left_half_training)
 
     for cluster in centroids_with_coordinates:
         pixel=cluster[0]
         for spot in cluster[2]:
             left_half_training[spot[0]][spot[1]]=pixel
-    io.imshow(left_half_training) 
-    io.show()
+    #io.imshow(left_half_training) 
+    #io.show()
+
+    left_grey_patches=[]
+
+    for i in range(1,len(left_half_training[0])-1):
+        for j in range(i, len(left_half_training[1])-1):
+            left_grey_patches.append(Left_training_grey_scale[i-1:i+2,j-1:j+2])
+
+    #surrouind the rihgt half with black pixels
+    border=[]
+
+    for i in range(len(left_half_training[0])+2):
+        border.append(np.array([0,0,0]))
+
+    working_right_side=[]
+    working_right_side.append(border)
+
+    for i in range(0,len(left_half_training[0])):
+        placements=[]
+        placements.append(np.array([0,0,0]))
+        for j in range(0,len(left_half_training[1])):
+            placements.append(left_half_training[i][j])
+        placements.append(np.array([0,0,0]))
+        working_right_side.append(placements)
+    
+    
+    working_right_side.append(border)
+    working_right_side=np.array(working_right_side)
 
     
+    progress=0
+    for i in range(1,len(working_right_side[0])-1):
+        for j in range(1, len(working_right_side[1])-1):
+            right_pixel_patch=working_right_side[i-1:i+2,j-1:j+2]
+            print(progress/(202*202))
+            q = PriorityQueue()
+            for patch in left_grey_patches:
+                similarity=get_patch_similarity(patch, right_pixel_patch)
+                #print(similarity)
+                q.put((similarity,(patch[1][1][0],patch[1][1][1],patch[1][1][2])))
             
 
+            six_patches=[]
+
+            num=6
+
+            while num:
+                six_patches.append(q.get()[1])
+                num-=1
+           
+
+            occurrences = collections.Counter(six_patches)
+            #print("Progress")
+
+            color=get_most_frequent(occurrences)
+            tie=check_tie(occurrences,color)
+
+            if not tie:
+                spot_color=get_appropriate_color(centroid_vals, color)
+
+                working_right_side[i][j]=spot_color
+            if tie:
+                color=working_right_side[i][j]
+
+                spot_color=[-1,-1,-1]
+                mindist=math.inf
+                for patch in six_patches:
+                    patch2=[patch[0],patch[1],patch[2]]
+                    dist=color_distance(patch2, color)
+                    if dist<mindist:
+                        mindist=dist
+                        spot_color=patch2
+
+                spot_color2=[-1,-1,-1]
+                mindist2=math.inf
+                for centroid in centroid_vals:
+                    distance=color_distance(spot_color, centroid)
+                    if distance<mindist2:
+                        mindist2=distance
+                        spot_color2=centroid
+                working_right_side=spot_color2
+
+            progress+=1
+    io.imshow(working_right_side) 
+    io.show()
+
+    #some cod3 to join th3 two parts togehter
+
+
+
+            
+
+
+
+    #prep the right half by adding a border to the array
+def get_appropriate_color(centroid_vals,color):
+    spot=[color[0],color[1],color[2]]
+    dist=math.inf
+    center_val=[-1,-1,-1]
+    for center in centroid_vals:
+        similarity=color_distance(spot, center)
+        if similarity<dist:
+            dist=similarity
+            centroid_val=center
+
+    return center_val
+
+def get_most_frequent(occurences):
+    get_most_frequent=(-1,-1,-1)
+    freq=-1
+    
+    for key in occurences.keys():
+        if occurences[key]>freq:
+            freq=occurences[key]
+            get_most_frequent=key
+    return get_most_frequent
+def check_tie(occurrences,color):
+    tie=False
+    for key in occurrences.keys():
+        if key==color:
+            continue
+        if occurrences[color]==occurrences[key]:
+            tie=True
+            return tie
+    return tie
+
+    print("Progress")
+def get_patch_similarity(left, right):
+    similarity=0
+    for i in range(0,len(left)):
+        for j in range(0,len(left)):
+            similarity+=color_distance(left[i][j], right[i][j])
+
+    return similarity
+    #print("Implement")
+            
+def set_to_grey_scale(image_data):
+    for i in range(image_data.shape[0]):
+        for j in range(image_data.shape[1]):
+            pixel=image_data[i][j]
+            red=pixel[0]
+            green=pixel[1]
+            blue=pixel[2]
+
+            RGB=int((.21*red)+(.72*green)+(.07*blue))
+
+            image_data[i][j]=[RGB,RGB,RGB]
 
 
 def loadImage(filename):
@@ -78,7 +225,7 @@ def k_means(left_half_training): #psoibbly delete later
 
         centroids,centroid_vals=averge_recalculation(centroids, centroid_vals)
 
-        if np.array_equal(prior_centroid, centroid_vals):
+        if centroid_verification(prior_centroid, centroid_vals):
             centroids_with_coordinates=[]
             for centroids in centroid_vals:
                 centroids_with_coordinates.append((centroids,[],[]))
@@ -86,6 +233,17 @@ def k_means(left_half_training): #psoibbly delete later
             centroids_with_coordinates, centroid_vals=KMeans_get_coordinates(left_half_training, centroids_with_coordinates, centroid_vals)
             return centroids_with_coordinates, centroid_vals
             break
+
+def centroid_verification(prior_centroid,centroid_vals):
+    verified=True
+
+    for i in range(0,5):
+        for j in range(0,3):
+            difference=abs(prior_centroid[i][j]-centroid_vals[i][j])
+            if difference>=5:
+                verified=False
+                return verified
+    return verified
 
 
 
@@ -208,7 +366,7 @@ def color_distance(start, end): #formula from lecture 20 notes
 
     distance=math.sqrt(red+green+blue)
 
-    return distance
+    return int(distance)
 
 
 
@@ -224,6 +382,7 @@ if __name__ == '__main__':
     image=io.imread('flowerpic.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
     training_data=get_training_data(image)
+    testing_data=get_testing_data(image)
 
     #test_vals=[[1,2,3],[7,8,3],[6,7,2]]
     #centroid_test=[([1,2,3],[[9,8,7],[8,7,6]]),([7,8,3],[[5,4,3],[2,1,3]]),([6,7,2],[[5,1,2],[3,5,6]])]
@@ -235,10 +394,9 @@ if __name__ == '__main__':
     #testing_data=get_testing_data(image)
     #print(image)
     #image=color.rgb2gray(image)
-    basic_agent(training_data)
+    basic_agent(training_data,testing_data)
     #io.imshow(training_data) 
     #io.show()
 
     #io.imshow(testing_data)
     #io.show()
-    

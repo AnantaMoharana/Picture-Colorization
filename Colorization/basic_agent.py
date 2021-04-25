@@ -10,52 +10,69 @@ from PIL import Image
 
 def basic_agent(left_half_training, right_testing_data):
 
-    #print('Basic Agent')
+    print('Basic Agent')
+    b=left_half_training.shape
+    print(b)
+    c=right_testing_data.shape
+    print(c)
+    io.imshow(left_half_training) 
+    io.show()
+    io.imshow(right_testing_data) 
+    io.show()
+    right_rows=len(right_testing_data[0])
+    right_columns=len(right_testing_data[1])
     Left_training_grey_scale=np.copy(left_half_training)
     set_to_grey_scale(Left_training_grey_scale)
     set_to_grey_scale(right_testing_data)
+    io.imshow(right_testing_data) 
+    io.show()
+    print(len(right_testing_data[0]))
+    print(len(right_testing_data[1]))
+
     centroids_with_coordinates, centroid_vals=k_means(left_half_training)
 
     for cluster in centroids_with_coordinates:
         pixel=cluster[0]
         for spot in cluster[2]:
             left_half_training[spot[0]][spot[1]]=pixel
-    #io.imshow(left_half_training) 
-    #io.show()
+    io.imshow(left_half_training) 
+    io.show()
 
     left_grey_patches=[]
 
-    for i in range(1,len(left_half_training[0])-1):
-        for j in range(i, len(left_half_training[1])-1):
+    for i in range(1,b[0]-1):
+        for j in range(1, b[1]-1):
             left_grey_patches.append(Left_training_grey_scale[i-1:i+2,j-1:j+2])
 
     #surrouind the rihgt half with black pixels
     border=[]
 
-    for i in range(len(left_half_training[0])+2):
+    for i in range(c[1]+2):
         border.append(np.array([0,0,0]))
 
     working_right_side=[]
     working_right_side.append(border)
 
-    for i in range(0,len(left_half_training[0])):
+    for i in range(0,c[0]):
         placements=[]
         placements.append(np.array([0,0,0]))
-        for j in range(0,len(left_half_training[1])):
-            placements.append(left_half_training[i][j])
+        for j in range(0,c[1]):
+            placements.append(right_testing_data[i][j])
         placements.append(np.array([0,0,0]))
         working_right_side.append(placements)
     
     
     working_right_side.append(border)
     working_right_side=np.array(working_right_side)
-
+    io.imshow(working_right_side) 
+    io.show()
+    w=working_right_side.shape
     
     progress=0
-    for i in range(1,len(working_right_side[0])-1):
-        for j in range(1, len(working_right_side[1])-1):
+    for i in range(1,w[0]-1):
+        for j in range(1, w[1]-1):
             right_pixel_patch=working_right_side[i-1:i+2,j-1:j+2]
-            print(progress/(202*202))
+            print((progress/(202*202))*100,"% Done")
             q = PriorityQueue()
             for patch in left_grey_patches:
                 similarity=get_patch_similarity(patch, right_pixel_patch)
@@ -101,9 +118,15 @@ def basic_agent(left_half_training, right_testing_data):
                     if distance<mindist2:
                         mindist2=distance
                         spot_color2=centroid
-                working_right_side=spot_color2
+                working_right_side[i][j]=spot_color2
 
             progress+=1
+
+            if progress%100==0:
+                io.imshow(working_right_side) 
+                io.show()
+
+
     io.imshow(working_right_side) 
     io.show()
 
@@ -379,7 +402,7 @@ def color_distance(start, end): #formula from lecture 20 notes
 
 if __name__ == '__main__':
     print("Main Method")
-    image=io.imread('flowerpic.jpg')
+    image=io.imread('super_small_flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
     training_data=get_training_data(image)
     testing_data=get_testing_data(image)

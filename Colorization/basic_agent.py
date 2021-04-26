@@ -30,6 +30,7 @@ def basic_agent(left_half_training, right_testing_data):
     print(len(right_testing_data[1]))
 
     centroids_with_coordinates, centroid_vals=k_means(left_half_training)
+    print(centroid_vals)
 
     for cluster in centroids_with_coordinates:
         pixel=cluster[0]
@@ -66,13 +67,13 @@ def basic_agent(left_half_training, right_testing_data):
     working_right_side=np.array(working_right_side)
     io.imshow(working_right_side) 
     io.show()
-    w=working_right_side.shape
+    w=right_testing_data.shape
     
     progress=0
     for i in range(1,w[0]-1):
         for j in range(1, w[1]-1):
-            right_pixel_patch=working_right_side[i-1:i+2,j-1:j+2]
-            print((progress/(202*202))*100,"% Done")
+            right_pixel_patch=right_testing_data[i-1:i+2,j-1:j+2]
+            print((progress/((w[0]-1)*(w[1]-1)))*100,"% Done")
             q = PriorityQueue()
             for patch in left_grey_patches:
                 similarity=get_patch_similarity(patch, right_pixel_patch)
@@ -97,10 +98,10 @@ def basic_agent(left_half_training, right_testing_data):
 
             if not tie:
                 spot_color=get_appropriate_color(centroid_vals, color)
-
-                working_right_side[i][j]=spot_color
+                #print(spot_color)
+                right_testing_data[i][j]=spot_color
             if tie:
-                color=working_right_side[i][j]
+                color=right_testing_data[i][j]
 
                 spot_color=[-1,-1,-1]
                 mindist=math.inf
@@ -118,16 +119,16 @@ def basic_agent(left_half_training, right_testing_data):
                     if distance<mindist2:
                         mindist2=distance
                         spot_color2=centroid
-                working_right_side[i][j]=spot_color2
+                right_testing_data[i][j]=spot_color2
 
             progress+=1
 
-            if progress%100==0:
-                io.imshow(working_right_side) 
+            if progress%1600==0:
+                io.imshow(right_testing_data) 
                 io.show()
 
 
-    io.imshow(working_right_side) 
+    io.imshow(right_testing_data) 
     io.show()
 
     #some cod3 to join th3 two parts togehter
@@ -147,7 +148,7 @@ def get_appropriate_color(centroid_vals,color):
         similarity=color_distance(spot, center)
         if similarity<dist:
             dist=similarity
-            centroid_val=center
+            center_val=center
 
     return center_val
 
@@ -402,7 +403,7 @@ def color_distance(start, end): #formula from lecture 20 notes
 
 if __name__ == '__main__':
     print("Main Method")
-    image=io.imread('super_small_flower.jpg')
+    image=io.imread('smaller_flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
     training_data=get_training_data(image)
     testing_data=get_testing_data(image)

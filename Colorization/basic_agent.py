@@ -8,72 +8,56 @@ from queue import PriorityQueue
 import collections
 from PIL import Image
 
+
 def basic_agent(left_half_training, right_testing_data):
 
-    print('Basic Agent')
-    b=left_half_training.shape
-    print(b)
-    c=right_testing_data.shape
-    print(c)
-    io.imshow(left_half_training) 
-    io.show()
-    io.imshow(right_testing_data) 
-    io.show()
+    leftHalfSize=left_half_training.shape
+    rightHalfSize=right_testing_data.shape
+
+
     right_rows=len(right_testing_data[0])
     right_columns=len(right_testing_data[1])
+
     Left_training_grey_scale=np.copy(left_half_training)
+
     set_to_grey_scale(Left_training_grey_scale)
     set_to_grey_scale(right_testing_data)
-    io.imshow(right_testing_data) 
-    io.show()
-    print(len(right_testing_data[0]))
-    print(len(right_testing_data[1]))
 
     centroids_with_coordinates, centroid_vals=k_means(left_half_training)
-    print(centroid_vals)
 
     for cluster in centroids_with_coordinates:
         pixel=cluster[0]
         for spot in cluster[2]:
             left_half_training[spot[0]][spot[1]]=pixel
-    io.imshow(left_half_training) 
+
+    # Show version of left side
+    io.imshow(left_half_training)
     io.show()
+
+
+    # ----------------------------- NOW DO THE RIGHT SIDE -----------------------------
 
     left_grey_patches=[]
 
-    for i in range(1,b[0]-1):
-        for j in range(1, b[1]-1):
+    for i in range(1,leftHalfSize[0]-1):
+        for j in range(1, leftHalfSize[1]-1):
             left_grey_patches.append(Left_training_grey_scale[i-1:i+2,j-1:j+2])
 
-    #surrouind the rihgt half with black pixels
-    border=[]
 
-    for i in range(c[1]+2):
-        border.append(np.array([0,0,0]))
 
-    working_right_side=[]
-    working_right_side.append(border)
+    #border=[]
 
-    for i in range(0,c[0]):
-        placements=[]
-        placements.append(np.array([0,0,0]))
-        for j in range(0,c[1]):
-            placements.append(right_testing_data[i][j])
-        placements.append(np.array([0,0,0]))
-        working_right_side.append(placements)
-    
-    
-    working_right_side.append(border)
-    working_right_side=np.array(working_right_side)
-    io.imshow(working_right_side) 
-    io.show()
-    w=right_testing_data.shape
+    newRightSide = np.copy(right_testing_data)
+
+    w = right_testing_data.shape
+
     
     progress=0
     for i in range(1,w[0]-1):
         for j in range(1, w[1]-1):
             right_pixel_patch=right_testing_data[i-1:i+2,j-1:j+2]
-            print((progress/((w[0]-1)*(w[1]-1)))*100,"% Done")
+            if progress % 10 == 0:
+                print((progress/((w[0]-1)*(w[1]-1)))*100,"% Done")
             q = PriorityQueue()
             for patch in left_grey_patches:
                 similarity=get_patch_similarity(patch, right_pixel_patch)
@@ -99,7 +83,8 @@ def basic_agent(left_half_training, right_testing_data):
             if not tie:
                 spot_color=get_appropriate_color(centroid_vals, color)
                 #print(spot_color)
-                right_testing_data[i][j]=spot_color
+                #right_testing_data[i][j]=spot_color
+                newRightSide[i][j]=spot_color
             if tie:
                 color=right_testing_data[i][j]
 
@@ -119,16 +104,18 @@ def basic_agent(left_half_training, right_testing_data):
                     if distance<mindist2:
                         mindist2=distance
                         spot_color2=centroid
-                right_testing_data[i][j]=spot_color2
+                #right_testing_data[i][j]=spot_color2
+                newRightSide[i][j]=spot_color2
+
 
             progress+=1
 
-            if progress%1600==0:
-                io.imshow(right_testing_data) 
+            if progress%100==0:
+                io.imshow(newRightSide)
                 io.show()
 
 
-    io.imshow(right_testing_data) 
+    io.imshow(newRightSide)
     io.show()
 
     #some cod3 to join th3 two parts togehter
@@ -403,7 +390,7 @@ def color_distance(start, end): #formula from lecture 20 notes
 
 if __name__ == '__main__':
     print("Main Method")
-    image=io.imread('smaller_flower.jpg')
+    image=io.imread('tiger.jpeg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
     training_data=get_training_data(image)
     testing_data=get_testing_data(image)

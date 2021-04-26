@@ -41,7 +41,7 @@ def basic_agent(left_half_training, right_testing_data):
 
     for i in range(1,leftHalfSize[0]-1):
         for j in range(1, leftHalfSize[1]-1):
-            left_grey_patches.append(Left_training_grey_scale[i-1:i+2,j-1:j+2])
+            left_grey_patches.append((Left_training_grey_scale[i-1:i+2,j-1:j+2],(i,j)))
 
 
 
@@ -110,7 +110,7 @@ def basic_agent(left_half_training, right_testing_data):
 
             progress+=1
 
-            if progress%100==0:
+            if progress%4800==0:
                 io.imshow(newRightSide)
                 io.show()
 
@@ -390,7 +390,7 @@ def color_distance(start, end): #formula from lecture 20 notes
 
 if __name__ == '__main__':
     print("Main Method")
-    image=io.imread('tiger.jpeg')
+    image=io.imread('smaller_flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
     training_data=get_training_data(image)
     testing_data=get_testing_data(image)

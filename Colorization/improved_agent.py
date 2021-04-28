@@ -19,66 +19,29 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
     # Define a neural network
     inputLayer = np.array(
-        [[0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0],
-        [0, 0, 0]]
+        [[0] * 24]
     )
     outputLayer = np.array(
-        [[0],
-        [0],
-        [0]]
+        [[0] * 3]
     )
     hiddenLayer1_weights = np.array(
-        [[random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()]]
+        [[random.random()]*24]
     )
     hiddenLayer1_bias = np.array(
-        [[random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()]]
+        [[random.random()]*24]
     )
     hiddenLayer2_weights = np.array(
-        [[random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()]]
+        [[random.random()]*3]
     )
     hiddenLayer2_bias = np.array(
-        [[random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()],
-         [random.random()]]
+        [[random.random()]*3]
     )
 
 
 
     # Loop through entire left side (this is TRAINING)
-    for x in range(0, leftRows):
-        for y in range(0, leftColumns):
+    for x in range(1, leftRows-1):
+        for y in range(1, leftColumns-1):
 
             # Find our 8 surrounding squares (B&W) to train with
             midRight=leftHalfGrey[x+1][y]
@@ -91,7 +54,15 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             lowerLeft=leftHalfGrey[x-1][y+1]
 
             # Add the squares to our input layers:
-            inputLayer = [upperLeft, upperMid, upperRight, midLeft, midRight, lowerRight, lowerMid, lowerLeft]
+            inputLayer = np.array(
+                          [upperLeft[0], upperLeft[1], upperLeft[2],
+                          upperMid[0], upperMid[1], upperMid[2],
+                          upperRight[0], upperRight[1], upperRight[2],
+                          midLeft[0], midLeft[1], midLeft[2],
+                          midRight[0], midRight[1], midRight[2],
+                          lowerRight[0], lowerRight[1], lowerRight[2],
+                          lowerMid[0], lowerMid[1], lowerMid[2],
+                          lowerLeft[0], lowerLeft[1], lowerLeft[2]])
 
             # Find our middle COLOR pixel to train with
             middleColor = leftHalfColor[x][y]
@@ -100,11 +71,13 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             # Now train, we want to associate the surrouning B&W pixels with a color pixel.
 
             # RUN FORWARD THROUGH INPUT LAYER
-            hiddenLayer = sumTwoLists(dotProduct(inputLayer, hiddenLayer1_weights),  hiddenLayer1_bias)
+            hiddenLayer = sumTwoLists(np.dot(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+            hiddenlayerWithActivation= sigmoid(hiddenLayer)
 
-            hiddenlayerWithActivation= sigmoid(sum(hiddenLayer))
+            outputLayer = sumTwoLists(np.dot(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
+            outputLayer = sigmoid(outputLayer)
 
-            outputLayer = sum(dotProduct(hiddenlayerWithActivation, hiddenLayer2_weights) + hiddenLayer2_bias)
+            print(outputLayer)
 
 
             # NOW TIME FOR STOCHASTIC GRADIENT DESCENT, AND BACK PROPAGATION W/ ERROR LOSS FUNCTION
@@ -157,8 +130,16 @@ def set_to_grey_scale(image_data): # de-color an image
             image_data[i][j]=[RGB,RGB,RGB]
 
 # We will use the sigmoid activation function
-def sigmoid(n):
+def sigmoid_util(n):
     return 1 / (1 + math.pow(math.e, -n))
+
+
+def sigmoid(list):
+    if len(list) == 1: # nested list error sometimes
+        list = list[0]
+    return [sigmoid_util(element) for element in list]
+
+
 
 
 def stochasticGradientDescent():
@@ -166,7 +147,9 @@ def stochasticGradientDescent():
 
 
 def dotProduct(list1, list2):
-    return sum([x * y for x, y in zip(list1, list2)])
+    list1 = np.asarray(list1)
+    list1 = list1.reshape(1, 24)
+    return np.array(list1)*np.array(list2)
 
 
 def sumTwoLists(list1, list2):
@@ -175,6 +158,7 @@ def sumTwoLists(list1, list2):
         for j in range(0, len(list2)):
             result[i][j] = result[i][j] + list2[i][j]
     return result
+
 
 
 
@@ -192,4 +176,7 @@ if __name__ == '__main__':
 
     # Run the improved agent code
     improved_agent(training_data, leftHalfGreyScale, testing_data)
+
+
+
 

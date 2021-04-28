@@ -1,123 +1,237 @@
 import numpy as np
+from numpy.lib.function_base import diff
 from skimage import io, color
-import math
+import matplotlib.pyplot as plt
 import random
+import math
+from queue import PriorityQueue
+import collections
+from PIL import Image
+
+
+def basic_agent(left_half_training, right_testing_data):
+
+    leftHalfSize=left_half_training.shape
+    rightHalfSize=right_testing_data.shape
+    b=left_half_training.shape
+    print(b)
+    c=right_testing_data.shape
+    print(c)
+
+    right_rows=len(right_testing_data[0])
+    right_columns=len(right_testing_data[1])
+
+    Left_training_grey_scale=np.copy(left_half_training)
+
+    set_to_grey_scale(Left_training_grey_scale)
+    set_to_grey_scale(right_testing_data)
+
+    centroids_with_coordinates, centroid_vals=k_means(left_half_training)
+
+    for cluster in centroids_with_coordinates:
+        pixel=cluster[0]
+        for spot in cluster[2]:
+            left_half_training[spot[0]][spot[1]]=pixel
+
+    # Show version of left side
+    io.imshow(left_half_training)
+    io.show()
+#
+
+    # ----------------------------- NOW DO THE RIGHT SIDE -----------------------------
+
+    left_grey_patches=[]
+
+    for i in range(1,leftHalfSize[0]-1):
+        for j in range(1, leftHalfSize[1]-1):
+            left_grey_patches.append((Left_training_grey_scale[i-1:i+2,j-1:j+2],(i,j)))
 
 
 
-def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
+    #border=[]
+    #surrouind the rihgt half with black pixels
+    border=[]
+    for i in range(c[1]+2):
+        border.append(np.array([0,0,0]))
+    working_right_side=[]
+    working_right_side.append(border)
+    for i in range(0,c[0]):
+        placements=[]
+        placements.append(np.array([0,0,0]))
+        for j in range(0,c[1]):
+            placements.append(right_testing_data[i][j])
+        placements.append(np.array([0,0,0]))
+        working_right_side.append(placements)
+    working_right_side.append(border)
+    working_right_side=np.array(working_right_side)
 
-    # Get size values for easy access
-    rightHalfSize=rightHalfGrey.shape
-    rightRows=len(rightHalfGrey[0])
-    rightColumns=len(rightHalfGrey[1])
+    newRightSide = np.copy(working_right_side)
 
-    leftHalfSize = leftHalfGrey.shape
-    leftRows=len(leftHalfGrey[0])
-    leftColumns=len(leftHalfGrey[0])
+    w = working_right_side.shape
 
+    
+    progress=0
+    for i in range(1,w[0]-1):
+        for j in range(1, w[1]-1):
+            right_pixel_patch=working_right_side[i-1:i+2,j-1:j+2]
+            if progress % 10 == 0:
+                print((progress/((w[0]-1)*(w[1]-1)))*100,"% Done")
+            q = PriorityQueue()
+            for patch_set in left_grey_patches:
+                patch=patch_set[0]
+                similarity=get_patch_similarity(patch, right_pixel_patch)
+                #print(similarity)
+                q.put((similarity,patch_set[1]))
+            
 
-    # Define a neural network
-    inputLayer = np.array(
-        [[0] * 24]
-    )
-    outputLayer = np.array(
-        [[0] * 3]
-    )
-    hiddenLayer1_weights = np.array(
-        [[random.random()]*24]
-    )
-    hiddenLayer1_bias = np.array(
-        [[random.random()]*24]
-    )
-    hiddenLayer2_weights = np.array(
-        [[random.random()]*3]
-    )
-    hiddenLayer2_bias = np.array(
-        [[random.random()]*3]
-    )
+            six_patches=[]
 
+            num=6
 
+            while num:
+                coordinates=q.get()[1]
+                rgb_values=left_half_training[coordinates[0]][coordinates[1]].tolist()
+                color=(rgb_values[0],rgb_values[1],rgb_values[2])
+                six_patches.append(color)
+                num-=1
+           
 
-    # Loop through entire left side (this is TRAINING)
-    for x in range(1, leftRows-1):
-        for y in range(1, leftColumns-1):
+            occurrences = collections.Counter(six_patches)
+            #print("Progress")
 
-            # Find our 8 surrounding squares (B&W) to train with
-            midRight=leftHalfGrey[x+1][y]
-            midLeft=leftHalfGrey[x-1][y]
-            upperMid=leftHalfGrey[x][y+1]
-            lowerMid=leftHalfGrey[x][y-1]
-            lowerRight=leftHalfGrey[x+1][y+1]
-            upperLeft=leftHalfGrey[x-1][y-1]
-            upperRight=leftHalfGrey[x+1][y-1]
-            lowerLeft=leftHalfGrey[x-1][y+1]
+            color=get_most_frequent(occurrences)
+            tie=check_tie(occurrences,color)
 
-            # Add the squares to our input layers:
-            inputLayer = np.array(
-                          [upperLeft[0], upperLeft[1], upperLeft[2],
-                          upperMid[0], upperMid[1], upperMid[2],
-                          upperRight[0], upperRight[1], upperRight[2],
-                          midLeft[0], midLeft[1], midLeft[2],
-                          midRight[0], midRight[1], midRight[2],
-                          lowerRight[0], lowerRight[1], lowerRight[2],
-                          lowerMid[0], lowerMid[1], lowerMid[2],
-                          lowerLeft[0], lowerLeft[1], lowerLeft[2]])
+            if not tie:
+                #spot_color=get_appropriate_color(centroid_vals, color)
+                #print(spot_color)
+                #right_testing_data[i][j]=spot_color
+                newRightSide[i][j]=[color[0],color[1],color[2]]
+            if tie:
+                color=working_right_side[i][j]
 
-            # Find our middle COLOR pixel to train with
-            middleColor = leftHalfColor[x][y]
+                min_dist=math.inf
+                patch_rgb=[-1,-1,-1]
 
+                for key in occurrences.keys():
+                    test=[key[0],key[1],key[2]]
 
-            # Now train, we want to associate the surrouning B&W pixels with a color pixel.
+                    simil=color_distance(test, color)
 
-            # RUN FORWARD THROUGH INPUT LAYER
-            hiddenLayer = sumTwoLists(np.dot(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
-            hiddenlayerWithActivation= sigmoid(hiddenLayer)
-
-            outputLayer = sumTwoLists(np.dot(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
-            outputLayer = sigmoid(outputLayer)
-
-            print(outputLayer)
-
-
-            # NOW TIME FOR STOCHASTIC GRADIENT DESCENT, AND BACK PROPAGATION W/ ERROR LOSS FUNCTION
-
-            print("implement here stochasticGradientDescent()")
+                    if simil<min_dist:
+                        min_dist=simil
+                        patch_rgb=test
+                
 
 
 
+                #spot_color=[-1,-1,-1]
+                #mindist=math.inf
+                #for patch in six_patches:
+                #    patch2=[patch[0],patch[1],patch[2]]
+                #    dist=color_distance(patch2, color)
+                #    if dist<mindist:
+                #        mindist=dist
+                #        spot_color=patch2
+#
+                #spot_color2=[-1,-1,-1]
+                #mindist2=math.inf
+                #for centroid in centroid_vals:
+                #    distance=color_distance(spot_color, centroid)
+                #    if distance<mindist2:
+                #        mindist2=distance
+                #        spot_color2=centroid
+                ##right_testing_data[i][j]=spot_color2
+                newRightSide[i][j]=patch_rgb
 
 
-def get_training_data(image):  # left half of the image
-    row = image.shape[0]
-    column = int(image.shape[1] / 2)
-    print(column)
-    train_rows = []
+            progress+=1
 
-    for i in range(row):
-        train_columns = []
-        for j in range(column):
-            train_columns.append(image[i][j])
-        train_rows.append(train_columns)
 
-    training_data = np.array(train_rows)
-    return training_data
+    io.imshow(newRightSide)
+    io.show()
+        #remove the border
 
-def get_testing_data(image):  # right half of the image
-    row = image.shape[0]
-    column = int(image.shape[1] / 2) + 1
-    test_rows = []
+    lw=newRightSide.shape
 
-    for i in range(row):
-        test_columns = []
-        for j in range(column, image.shape[1]):
-            test_columns.append(image[i][j])
-        test_rows.append(test_columns)
+    copycolumns=[]
+    copyrows=[]
 
-    testing_data = np.array(test_rows)
-    return testing_data
+    for i in range(1,lw[0]-1):
+        copyrows=[]
+        for j in range(1,lw[1]-1):
+            copyrows.append(newRightSide[i][j])
+        copycolumns.append(copyrows)
 
-def set_to_grey_scale(image_data): # de-color an image
+    copycolumns=np.array(copycolumns)
+
+
+    basic=np.concatenate((left_half_training,copycolumns),axis=1)
+
+
+
+    
+        
+    io.imshow(basic)
+    io.show()
+               
+
+
+    #io.imshow(newRightSide)
+    #io.show()
+
+    #some cod3 to join th3 two parts togehter
+
+
+
+            
+
+
+
+    #prep the right half by adding a border to the array
+def get_appropriate_color(centroid_vals,color):
+    spot=[color[0],color[1],color[2]]
+    dist=math.inf
+    center_val=[-1,-1,-1]
+    for center in centroid_vals:
+        similarity=color_distance(spot, center)
+        if similarity<dist:
+            dist=similarity
+            center_val=center
+
+    return center_val
+
+def get_most_frequent(occurences):
+    get_most_frequent=(-1,-1,-1)
+    freq=-1
+    
+    for key in occurences.keys():
+        if occurences[key]>freq:
+            freq=occurences[key]
+            get_most_frequent=key
+    return get_most_frequent
+def check_tie(occurrences,color):
+    tie=False
+    for key in occurrences.keys():
+        if key==color:
+            continue
+        if occurrences[color]==occurrences[key]:
+            tie=True
+            return tie
+    return tie
+
+    print("Progress")
+def get_patch_similarity(left, right):
+    similarity=0
+    for i in range(0,len(left)):
+        for j in range(0,len(left)):
+            similarity+=color_distance(left[i][j], right[i][j])
+
+    return similarity
+    #print("Implement")
+
+            
+def set_to_grey_scale(image_data):
     for i in range(image_data.shape[0]):
         for j in range(image_data.shape[1]):
             pixel=image_data[i][j]
@@ -129,35 +243,208 @@ def set_to_grey_scale(image_data): # de-color an image
 
             image_data[i][j]=[RGB,RGB,RGB]
 
-# We will use the sigmoid activation function
-def sigmoid_util(n):
-    return 1 / (1 + math.pow(math.e, -n))
+
+def loadImage(filename):
+    with Image.open(filename).convert('RGB') as picture:
+        imageWidth, imageHeight = picture.size
+    pixels = picture.load()
+
+    for i in range(int(imageWidth/2), imageWidth):
+        for j in range(0,imageHeight):
+            RGB_Val = int(.21*pixels[i, j][0] + .72*pixels[i, j][1] + .07*pixels[i, j][2])
+            pixels[i,j] = (RGB_Val, RGB_Val, RGB_Val)
+    picture.show()
+
+def get_training_data(image): #left half of the image
+    #("Getting Training Data")
+    row=image.shape[0] 
+    column=int(image.shape[1]/2)
+    print(column)
+    train_rows=[]
+    
+    for i in range(row):
+        train_columns=[]
+        #print(i)
+        for j in range(column):
+            #print(j)
+            train_columns.append(image[i][j])
+        train_rows.append(train_columns)
+
+    training_data=np.array(train_rows)
+
+    return training_data
 
 
-def sigmoid(list):
-    if len(list) == 1: # nested list error sometimes
-        list = list[0]
-    return [sigmoid_util(element) for element in list]
+def k_means(left_half_training): #psoibbly delete later
+
+
+    #print("k_means")
+    #get the first 5 ranodm centroids
+    centroids=[]
+    centroid_vals=[]
+    for _ in range(5):
+        x=random.randint(0,left_half_training.shape[0]-1)
+        y=random.randint(0,left_half_training.shape[1]-1)
+        print(left_half_training[x][y])
+        centroids.append((left_half_training[x][y],[]))
+        centroid_vals.append(left_half_training[x][y])
+    
+    #get the clusters assinged to each centroid
+    while True:
+        #print("break")
+
+        centroids, centroid_vals=KMeans_get_clusters(left_half_training, centroids, centroid_vals)
+
+        prior_centroid=centroid_vals
+
+        centroids,centroid_vals=averge_recalculation(centroids, centroid_vals)
+
+        if centroid_verification(prior_centroid, centroid_vals):
+            centroids_with_coordinates=[]
+            for centroids in centroid_vals:
+                centroids_with_coordinates.append((centroids,[],[]))
+            
+            centroids_with_coordinates, centroid_vals=KMeans_get_coordinates(left_half_training, centroids_with_coordinates, centroid_vals)
+            return centroids_with_coordinates, centroid_vals
+            break
+
+def centroid_verification(prior_centroid,centroid_vals):
+    verified=True
+
+    for i in range(0,5):
+        for j in range(0,3):
+            difference=abs(prior_centroid[i][j]-centroid_vals[i][j])
+            if difference>=5:
+                verified=False
+                return verified
+    return verified
+
+
+
+        
+def KMeans_get_coordinates(left_half_training,centroids_with_coordinates, centroid_vals):
+    #print("Running Kmeans")
+   # minimum_distance=math.inf
+    cluster_assignment=[-1,-1,-1]
+    for i in range(left_half_training.shape[0]):
+        for j in range(left_half_training.shape[1]):
+
+            #compute the distance for each of the centroids
+            minimum_distance=math.inf
+            for val in centroid_vals:
+                distance=color_distance(left_half_training[i][j],val)
+
+                if distance<minimum_distance:
+                    minimum_distance=distance
+                    cluster_assignment=val
+
+            for centroid in centroids_with_coordinates:
+                if np.array_equal(centroid[0],cluster_assignment):
+                    centroid[1].append(left_half_training[i][j])
+                    centroid[2].append((i,j))
+                    break
+            
+    return centroids_with_coordinates, centroid_vals
+
+
+    #print("progress")
+    
+
+
+    
+            
+
+
+
+def get_testing_data(image): #right half of the image
+    #print("Getting Testing Data")
+    row=image.shape[0] 
+    column=int(image.shape[1]/2)
+    test_rows=[]
+    
+    for i in range(row):
+        test_columns=[]
+        for j in range(column,image.shape[1]):
+            #print("working")
+            test_columns.append(image[i][j])
+        test_rows.append(test_columns)
+
+    testing_data=np.array(test_rows)
+
+    return testing_data
+
+
+
+def KMeans_get_clusters(left_half_training,centroids, centroid_vals):
+    #print("Running Kmeans")
+   # minimum_distance=math.inf
+    cluster_assignment=[-1,-1,-1]
+    for i in range(left_half_training.shape[0]):
+        for j in range(left_half_training.shape[1]):
+
+            #compute the distance for each of the centroids
+            minimum_distance=math.inf
+            for val in centroid_vals:
+                distance=color_distance(left_half_training[i][j],val)
+
+                if distance<minimum_distance:
+                    minimum_distance=distance
+                    cluster_assignment=val
+
+            for centroid in centroids:
+                if np.array_equal(centroid[0],cluster_assignment):
+                    centroid[1].append(left_half_training[i][j])
+                    break
+            
+    return centroids, centroid_vals
+
+
+    #print("progress")
+    
+    
+
+def averge_recalculation(centroids, centroid_vals):    #compute new Centroids
+    #print("Recomputing Clusters")
+    new_centers_kmeans=[]
+    new_centroids=[]
+    for colors  in centroids:
+        counter = 0
+        red=0
+        green=0
+        blue=0
+        for rgb in colors[1]:
+            red+=rgb[0]
+            green+=rgb[1]
+            blue+=rgb[2]
+            counter+=1
+        new_center=[int(red/counter),int(green/counter),int(blue/counter)]
+        new_centers_kmeans.append(np.array(new_center))
+        new_centroids.append((np.array(new_center),[]))
+    
+    return  new_centroids, new_centers_kmeans
 
 
 
 
-def stochasticGradientDescent():
-    print("implement here")
+        
 
 
-def dotProduct(list1, list2):
-    list1 = np.asarray(list1)
-    list1 = list1.reshape(1, 24)
-    return np.array(list1)*np.array(list2)
+def color_distance(start, end): #formula from lecture 20 notes
+    #print("Color Distance From Lecture 20 Notes")
+
+    red=2*(start[0]-end[0])**2
+
+    green=4*(start[1]-end[1])**2
+
+    blue=3*(start[2]-end[2])**2
+
+    distance=math.sqrt(red+green+blue)
+
+    return distance
 
 
-def sumTwoLists(list1, list2):
-    result = list1
-    for i in range(0, len(list1)):
-        for j in range(0, len(list2)):
-            result[i][j] = result[i][j] + list2[i][j]
-    return result
+
+
 
 
 
@@ -165,16 +452,25 @@ def sumTwoLists(list1, list2):
 
 
 if __name__ == '__main__':
-    image = io.imread('super_small_flower.jpg')
+    print("Main Method")
+    image=io.imread('flower3test.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
+    training_data=get_training_data(image)
+    testing_data=get_testing_data(image)
 
-    training_data = get_training_data(image)
-    testing_data = get_testing_data(image)
+    #test_vals=[[1,2,3],[7,8,3],[6,7,2]]
+    #centroid_test=[([1,2,3],[[9,8,7],[8,7,6]]),([7,8,3],[[5,4,3],[2,1,3]]),([6,7,2],[[5,1,2],[3,5,6]])]
 
-    leftHalfGreyScale= np.copy(training_data)
-    set_to_grey_scale(leftHalfGreyScale)
+    #centroid, new_centers_kmeans=averge_recalculation(centroid_test, test_vals)
+    #centroids_with_coordinates, centroid_vals=k_means(training_data)
+    #print("Basic Agent Left Half time")
+    #KMeans_get_clusters(training_data)
+    #testing_data=get_testing_data(image)
+    #print(image)
+    #image=color.rgb2gray(image)
+    basic_agent(training_data,testing_data)
+    #io.imshow(training_data) 
+    #io.show()
 
-    # Run the improved agent code
-    improved_agent(training_data, leftHalfGreyScale, testing_data)
-
-
+    #io.imshow(testing_data)
+    #io.show()

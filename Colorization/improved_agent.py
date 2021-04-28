@@ -100,7 +100,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             # Now train, we want to associate the surrouning B&W pixels with a color pixel.
 
             # RUN FORWARD THROUGH INPUT LAYER
-            hiddenLayer = sumTwoLists(dotProduct(inputLayer, hiddenLayer1_weights) + hiddenLayer1_bias)
+            hiddenLayer = sumTwoLists(dotProduct(inputLayer, hiddenLayer1_weights),  hiddenLayer1_bias)
 
             hiddenlayerWithActivation= sigmoid(sum(hiddenLayer))
 
@@ -166,7 +166,7 @@ def stochasticGradientDescent():
 
 
 def dotProduct(list1, list2):
-    return sum([x * y for x, y in zip(V1, V2)])
+    return sum([x * y for x, y in zip(list1, list2)])
 
 
 def sumTwoLists(list1, list2):

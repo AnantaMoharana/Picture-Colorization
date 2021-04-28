@@ -100,7 +100,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
 
             for i in range(len(outputLayer)):
-                outputLayer[i]=sigmoid(outputLayer[i])
+                outputLayer[i]=sigmoid(outputLayer[i])*255
 
             #outputLayer = sigmoid_util(outputLayer)
 

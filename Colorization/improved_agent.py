@@ -27,16 +27,28 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
    # hiddenLayer1_weights = np.array(
    #     [random.random()*24]
    # )
-   # hiddenLayer1_bias = np.array(
-   #     [random.random(),random.random(),random.random()]
-   # )
+    hiddenLayer1_bias = np.array(
+        [random.random(),random.random(),random.random()]
+    )
     #hiddenLayer2_weights = np.array(
     #    [random.random()*3]
     #)
-    hiddenLayer2_bias = np.array(
-        [[random.random()]*3]
-    )
+    #hiddenLayer2_bias = np.array(
+    #    [[random.random()]*3]
+    #)
+    hiddenLayer2_bias=[random.random()]
+    hiddenLayer1_weights=[]
+#
+    for i in range(8):
+        vec=[]
+        for j in range(3):
+            vec.append(random.random())
+        hiddenLayer1_weights.append(vec)
+    hiddenLayer1_weights = np.array(hiddenLayer1_weights)
 
+    hiddenLayer2_weights=[]
+    for i in range(3):
+        hiddenLayer2_weights.append(random.random())
 
 
     # Loop through entire left side (this is TRAINING)
@@ -68,19 +80,19 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             middleColor = leftHalfColor[x][y]
 
             inputLayer = np.array(
-                         [ [upperLeft[0], upperMid[0], upperRight[0], midLeft[0], midRight[0], lowerRight[0], lowerMid[0],lowerLeft[0]], 
-                          [upperLeft[1], upperMid[1], upperRight[1], midLeft[1], midRight[1], lowerRight[1], lowerMid[1],lowerLeft[1]],
-                          [upperLeft[2], upperMid[2], upperRight[2], midLeft[2], midRight[2], lowerRight[2], lowerMid[2],lowerLeft[2]]])
+                         [ [upperLeft[0]/255, upperMid[0]/255, upperRight[0]/255, midLeft[0]/255, midRight[0]/255, lowerRight[0]/255, lowerMid[0]/255,lowerLeft[0]/255], 
+                          [upperLeft[1]/255, upperMid[1]/255, upperRight[1]/255, midLeft[1]/255, midRight[1]/255, lowerRight[1], lowerMid[1]/255,lowerLeft[1]/255],
+                          [upperLeft[2]/255, upperMid[2]/255, upperRight[2]/255, midLeft[2]/255, midRight[2]/255, lowerRight[2]/255, lowerMid[2]/255,lowerLeft[2]/255]])
             
             dim=inputLayer.shape
-            hiddenLayer1_weights=[]
-
-            for i in range(dim[1]):
-                vec=[]
-                for j in range(dim[0]):
-                    vec.append(random.random())
-                hiddenLayer1_weights.append(vec)
-            hiddenLayer1_weights = np.array(hiddenLayer1_weights)
+            #hiddenLayer1_weights=[]
+#
+            #for i in range(dim[1]):
+            #    vec=[]
+            #    for j in range(dim[0]):
+            #        vec.append(random.random())
+            #    hiddenLayer1_weights.append(vec)
+            #hiddenLayer1_weights = np.array(hiddenLayer1_weights)
             # Now train, we want to associate the surrouning B&W pixels with a color pixel.
             #each vector should i
             # RUN FORWARD THROUGH INPUT LAYER
@@ -92,11 +104,9 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
             hiddenlayerWithActivation= sigmoid_util(hiddenLayer)
 
-            hiddenLayer2_weights=[]
-            for i in range(hiddenlayerWithActivation.shape[0]):
-                hiddenLayer2_weights.append(random.random())
 
-            hiddenLayer2_bias=[random.random()]
+
+
             outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
 
             for i in range(len(outputLayer)):

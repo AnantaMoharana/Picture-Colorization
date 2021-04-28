@@ -170,10 +170,11 @@ def dotProduct(list1, list2):
 
 
 def sumTwoLists(list1, list2):
-    result = [[list1[i][j] + list2[i][j] for j in range
-    (len(list1[0]))] for i in range(len(list1))]
+    result = list1
+    for i in range(0, len(list1)):
+        for j in range(0, len(list2)):
+            result[i][j] = result[i][j] + list2[i][j]
     return result
-
 
 
 

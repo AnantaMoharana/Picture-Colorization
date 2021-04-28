@@ -27,9 +27,9 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
    # hiddenLayer1_weights = np.array(
    #     [random.random()*24]
    # )
-    hiddenLayer1_bias = np.array(
-        [random.random(),random.random(),random.random()]
-    )
+   # hiddenLayer1_bias = np.array(
+   #     [random.random(),random.random(),random.random()]
+   # )
     #hiddenLayer2_weights = np.array(
     #    [random.random()*3]
     #)

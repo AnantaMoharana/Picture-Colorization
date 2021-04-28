@@ -24,14 +24,14 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     outputLayer = np.array(
         [[0] * 3]
     )
-    hiddenLayer1_weights = np.array(
-        [[random.random()]*24]
-    )
+   # hiddenLayer1_weights = np.array(
+   #     [random.random()*24]
+   # )
     hiddenLayer1_bias = np.array(
         [[random.random()]*24]
     )
     hiddenLayer2_weights = np.array(
-        [[random.random()]*3]
+        [random.random()*3]
     )
     hiddenLayer2_bias = np.array(
         [[random.random()]*3]
@@ -53,25 +53,47 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             upperRight=leftHalfGrey[x+1][y-1]
             lowerLeft=leftHalfGrey[x-1][y+1]
 
-            # Add the squares to our input layers:
-            inputLayer = np.array(
-                          [upperLeft[0], upperLeft[1], upperLeft[2],
-                          upperMid[0], upperMid[1], upperMid[2],
-                          upperRight[0], upperRight[1], upperRight[2],
-                          midLeft[0], midLeft[1], midLeft[2],
-                          midRight[0], midRight[1], midRight[2],
-                          lowerRight[0], lowerRight[1], lowerRight[2],
-                          lowerMid[0], lowerMid[1], lowerMid[2],
-                          lowerLeft[0], lowerLeft[1], lowerLeft[2]])
-
-            # Find our middle COLOR pixel to train with
+            ## Add the squares to our input layers:
+            #inputLayer = np.array(
+            #              [upperLeft[0], upperLeft[1], upperLeft[2],
+            #              upperMid[0], upperMid[1], upperMid[2],
+            #              upperRight[0], upperRight[1], upperRight[2],
+            #              midLeft[0], midLeft[1], midLeft[2],
+            #              midRight[0], midRight[1], midRight[2],
+            #              lowerRight[0], lowerRight[1], lowerRight[2],
+            #              lowerMid[0], lowerMid[1], lowerMid[2],
+            #              lowerLeft[0], lowerLeft[1], lowerLeft[2]])
+#
+            ## Find our middle COLOR pixel to train with
             middleColor = leftHalfColor[x][y]
 
+            inputLayer = np.array(
+                          [upperLeft,
+                          upperMid,
+                          upperRight,
+                          midLeft,
+                          midRight,
+                          lowerRight,
+                          lowerMid,
+                          lowerLeft])
+            
+            dim=inputLayer.shape
+            hiddenLayer1_weights=[]
 
+            for i in range(dim[1]):
+                vec=[]
+                for j in range(dim[0]):
+                    vec.append(random.random())
+                hiddenLayer1_weights.append(vec)
+            hiddenLayer1_weights = np.array(hiddenLayer1_weights)
             # Now train, we want to associate the surrouning B&W pixels with a color pixel.
 
             # RUN FORWARD THROUGH INPUT LAYER
-            hiddenLayer = sumTwoLists(np.dot(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+            print(inputLayer)
+            print(hiddenLayer1_weights.shape)
+            print(hiddenLayer1_bias.shape)
+            print(np.matmul(inputLayer, hiddenLayer1_weights))
+            hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
             hiddenlayerWithActivation= sigmoid(hiddenLayer)
 
             outputLayer = sumTwoLists(np.dot(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)

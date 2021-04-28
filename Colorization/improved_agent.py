@@ -28,11 +28,11 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
    #     [random.random()*24]
    # )
     hiddenLayer1_bias = np.array(
-        [[random.random()]*24]
+        [random.random(),random.random(),random.random()]
     )
-    hiddenLayer2_weights = np.array(
-        [random.random()*3]
-    )
+    #hiddenLayer2_weights = np.array(
+    #    [random.random()*3]
+    #)
     hiddenLayer2_bias = np.array(
         [[random.random()]*3]
     )
@@ -68,14 +68,9 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             middleColor = leftHalfColor[x][y]
 
             inputLayer = np.array(
-                          [upperLeft,
-                          upperMid,
-                          upperRight,
-                          midLeft,
-                          midRight,
-                          lowerRight,
-                          lowerMid,
-                          lowerLeft])
+                         [ [upperLeft[0], upperMid[0], upperRight[0], midLeft[0], midRight[0], lowerRight[0], lowerMid[0],lowerLeft[0]], 
+                          [upperLeft[1], upperMid[1], upperRight[1], midLeft[1], midRight[1], lowerRight[1], lowerMid[1],lowerLeft[1]],
+                          [upperLeft[2], upperMid[2], upperRight[2], midLeft[2], midRight[2], lowerRight[2], lowerMid[2],lowerLeft[2]]])
             
             dim=inputLayer.shape
             hiddenLayer1_weights=[]
@@ -87,17 +82,27 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
                 hiddenLayer1_weights.append(vec)
             hiddenLayer1_weights = np.array(hiddenLayer1_weights)
             # Now train, we want to associate the surrouning B&W pixels with a color pixel.
-
+            #each vector should i
             # RUN FORWARD THROUGH INPUT LAYER
             print(inputLayer)
             print(hiddenLayer1_weights.shape)
             print(hiddenLayer1_bias.shape)
             print(np.matmul(inputLayer, hiddenLayer1_weights))
-            hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
-            hiddenlayerWithActivation= sigmoid(hiddenLayer)
 
-            outputLayer = sumTwoLists(np.dot(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
-            outputLayer = sigmoid(outputLayer)
+            hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+            hiddenlayerWithActivation= sigmoid_util(hiddenLayer)
+
+            hiddenLayer2_weights=[]
+            for i in range(hiddenlayerWithActivation.shape[0]):
+                hiddenLayer2_weights.append(random.random())
+
+            hiddenLayer2_bias=[random.random()]
+            outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
+
+            for i in range(len(outputLayer)):
+                outputLayer[i]=sigmoid(outputLayer[i])
+
+            #outputLayer = sigmoid_util(outputLayer)
 
             print(outputLayer)
 
@@ -153,13 +158,21 @@ def set_to_grey_scale(image_data): # de-color an image
 
 # We will use the sigmoid activation function
 def sigmoid_util(n):
-    return 1 / (1 + math.pow(math.e, -n))
+    size=n.shape
+    for i in range(size[0]):
+        for j in range(size[1]):
+            n[i][j]= 1 / (1 + math.exp(-n[i][j]))
+
+    return n
 
 
-def sigmoid(list):
-    if len(list) == 1: # nested list error sometimes
-        list = list[0]
-    return [sigmoid_util(element) for element in list]
+#def sigmoid(list):
+#    if len(list) == 1: # nested list error sometimes
+#        list = list[0]
+#    return [sigmoid_util(element) for element in list]
+def sigmoid(num):
+
+    return 1/(1+math.exp(-num))
 
 
 
@@ -177,8 +190,7 @@ def dotProduct(list1, list2):
 def sumTwoLists(list1, list2):
     result = list1
     for i in range(0, len(list1)):
-        for j in range(0, len(list2)):
-            result[i][j] = result[i][j] + list2[i][j]
+        result[i]=np.add(result[i],list2)
     return result
 
 

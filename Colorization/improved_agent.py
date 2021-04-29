@@ -52,10 +52,13 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     )
 
 
-    # Loop through entire left side (this is TRAINING)
+
+    ## Prep our patches array and actual color values for training.
+    actualValues = []
+    patches = []
+
     for x in range(1, leftRows - 1):
         for y in range(1, leftColumns - 1):
-
             # Find our 8 surrounding squares (B&W) to train with
             midRight = leftHalfGrey[x + 1][y]
             midLeft = leftHalfGrey[x - 1][y]
@@ -68,43 +71,53 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             mid = leftHalfGrey[x][y]
 
             ## Find our middle COLOR pixel to train with
-            middleColor = leftHalfColor[x][y]
-
+            actualValues.append(leftHalfColor[x][y])
 
             ## Add the squares to our input layers:
-            inputLayer = np.array(
-                [[upperLeft[0]/255, upperMid[0]/255, upperRight[0]/255, midLeft[0]/255, midRight[0]/255, lowerRight[0]/255, lowerMid[0]/255,
-                  lowerLeft[0]/255, mid[0]/255],
-                 [upperLeft[1]/255, upperMid[1]/255, upperRight[1]/255, midLeft[1]/255, midRight[1]/255, lowerRight[1]/255, lowerMid[1]/255,
-                  lowerLeft[1]/255, mid[1]/255],
-                 [upperLeft[2]/255, upperMid[2]/255, upperRight[2]/255, midLeft[2]/255, midRight[2]/255, lowerRight[2]/255, lowerMid[2]/255,
-                  lowerLeft[2]/255, mid[2]/255]])
+            patches.append([
+                [upperLeft[0] / 255, upperMid[0] / 255, upperRight[0] / 255, midLeft[0] / 255, midRight[0] / 255, lowerRight[0] / 255, lowerMid[0] / 255, lowerLeft[0] / 255, mid[0] / 255],
+                 [upperLeft[1] / 255, upperMid[1] / 255, upperRight[1] / 255, midLeft[1] / 255, midRight[1] / 255, lowerRight[1] / 255, lowerMid[1] / 255, lowerLeft[1] / 255, mid[1] / 255],
+                 [upperLeft[2] / 255, upperMid[2] / 255, upperRight[2] / 255, midLeft[2] / 255, midRight[2] / 255, lowerRight[2] / 255, lowerMid[2] / 255, lowerLeft[2] / 255, mid[2] / 255]
+            ])
 
 
 
 
-            # Now train, we want to associa`te the surrouning B&W pixels with a color pixel.
-            hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+    ## Actual training happens here, rev up the epochs.
+    epochs = 10
+    for _ in range(epochs):
+
+        actualValues = []
+        predictedValues = []
+
+        # Loop through entire left side AGAIN
+        for index in range(1, (leftRows - 1)*(leftColumns - 1)):
+
+                ## Fetch the input patches:
+                inputLayer = np.array(patches[index])
+
+                ## Grab the resulting middle color (actual)
+                actualColor = actualValues[index]
+
+                ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
+                hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+                hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
+                outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
+                outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
 
 
-            hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
-
-            outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
-
-
-            outputLayer = 255 * outputLayer
-
-            error = outputLayer-middleColor # ERROR [RED, GREEN, BLUE]
+                # Get our error difference
+                error = outputLayer-actualColor
 
 
-            learning_rate = .5 # CHANGE THIS TO WHATEVER > 0 !!
+                # NOW TIME FOR STOCHASTIC GRADIENT DESCENT, AND BACK PROPAGATION W/ ERROR LOSS FUNCTION
 
 
 
 
-            # NOW TIME FOR STOCHASTIC GRADIENT DESCENT, AND BACK PROPAGATION W/ ERROR LOSS FUNCTION
-
-            #print("implement here stochasticGradientDescent()")
+# Using MEAN SQUARE ERROR to compute loss
+def loss(predicted, actual):
+    return
 
 
 def get_training_data(image):  # left half of the image

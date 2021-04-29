@@ -15,6 +15,8 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     leftColumns = len(leftHalfGrey[0])
 
     # Define a neural network
+    ## inWeight, inBias = lines from input -> hidden
+    ## outWeight, outBias = lines from hidden -> output
 
     ##LAYER1: INPUT LAYER
     inputLayer = np.array(
@@ -24,32 +26,35 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     )
 
     ##LAYER2: HIDDEN LAYER IN BIAS
-    hiddenLayer1_bias = np.array(
+    inBias = np.array(
         [random.random(),random.random(),random.random()]
     )
 
     ##LAYER2: HIDDEN LAYER IN WEIGHTS
     dim = inputLayer.shape
-    hiddenLayer1_weights = []
+    inWeights = []
     for i in range(dim[1]):
         vec = []
         for j in range(dim[0]):
             vec.append(random.random())
-        hiddenLayer1_weights.append(vec)
-    hiddenLayer1_weights = np.array(hiddenLayer1_weights)
+        inWeights.append(vec)
+    inWeights = np.array(inWeights)
 
     ##LAYER2: HIDDEN LAYER OUT WEIGHTS
-    hiddenLayer2_weights = []
+    outWeights = []
     for i in range(dim[0]):
-        hiddenLayer2_weights.append(random.random())
+        outWeights.append(random.random())
+    outWeights = np.array(outWeights)
 
     ##LAYER2: HIDDEN LAYER OUT BIAS
-    hiddenLayer2_bias = [random.random()]
+    outBias = [random.random()]
+    outBias = np.array(outBias)
 
     ##LAYER3: OUTPUT LAYER
     outputLayer = np.array(
         [0, 0, 0]
     )
+
 
 
 
@@ -86,10 +91,10 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     ## Parameters for training, feel free to edit to tune the model
     epochs = 1000
     w0 = .2
-    learningRate = .7
+    learningRate = .07
 
     # NOW TRAIN
-    for _ in range(epochs):
+    for iteration in range(epochs):
 
         ## GRAB A RANDOM SAMPLE AKA 'Stochastic'
         rand = random.randint(0, len(actualValues)-1)
@@ -101,29 +106,35 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         actualColor = actualValues[rand]
 
         ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
-        hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+        hiddenLayer = sumTwoLists(np.matmul(inputLayer, inWeights), inBias)
         hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
-        outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
+        outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, outWeights), outBias)
         outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
 
         ## Compute the loss (error function) & learning rate
         loss = error(outputLayer, actualColor)
 
-        ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT
+        ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT TODO: ERROR LIES HERE. WHAT ARE THE CALCULATIONS FOR THESE GRADIENTS?
+        inWeightGrad = 0
+        outWeightGrad = 0
 
-        # linear models (Neural network) notes has the equation, i just cant read it
-
-        bias_grad = (-2/(len(actualValues)-1)) * loss
-        hiddenLayer1_bias = hiddenLayer1_bias - (learningRate * bias_grad)
-
-        weight_grad = (-2/(len(actualValues)-1)) * loss
-        hiddenLayer1_weights = hiddenLayer1_weights - (learningRate * weight_grad)
+        inBiasGrad = 0
+        outBiasGrad = 0
 
 
+        inBias = inBias - (learningRate * inBiasGrad)
+        outBias = outBias - (learningRate * outBiasGrad)
+        inWeights = inWeights - (learningRate * inWeightGrad)
+        outWeights = outWeights - (learningRate * outWeightGrad)
+
+
+        ## Loss: should minimize with increasing epochs
+        print("Loss: ", loss, " epoch:", iteration)
 
 
 
-        print(math.sqrt(loss))
+
+
 
 
 

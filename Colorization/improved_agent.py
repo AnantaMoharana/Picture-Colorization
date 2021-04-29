@@ -83,47 +83,57 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 
 
-    ## Actual training happens here, rev up the epochs.
-    epochs = 10
+    ## Parameters for training, feel free to edit to tune the model
+    epochs = 1000
+    w0 = .2
+    learningRate = .7
+
+    # NOW TRAIN
     for _ in range(epochs):
 
-        actualValues = []
-        predictedValues = []
+        ## GRAB A RANDOM SAMPLE AKA 'Stochastic'
+        rand = random.randint(0, len(actualValues)-1)
 
-        # Loop through entire left side AGAIN
-        for index in range(1, (leftRows - 1)*(leftColumns - 1)):
+        ## Fetch the input patches:
+        inputLayer = np.array(patches[rand])
 
-                ## Fetch the input patches:
-                inputLayer = np.array(patches[index])
+        ## Grab the resulting middle color (actual)
+        actualColor = actualValues[rand]
 
-                ## Grab the resulting middle color (actual)
-                actualColor = actualValues[index]
+        ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
+        hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
+        hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
+        outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
+        outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
 
-                ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
-                hiddenLayer = sumTwoLists(np.matmul(inputLayer, hiddenLayer1_weights), hiddenLayer1_bias)
-                hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
-                outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, hiddenLayer2_weights), hiddenLayer2_bias)
-                outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
+        ## Compute the loss (error function) & learning rate
+        error = loss(outputLayer, actualColor)
 
-
-                # Get our error difference
-                error = outputLayer-actualColor
-
-
-                # NOW TIME FOR STOCHASTIC GRADIENT DESCENT, AND BACK PROPAGATION W/ ERROR LOSS FUNCTION
+        ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT
+        
+        # work in progress
+        hiddenLayer1_weights = hiddenLayer1_weights - (learningRate * GRADIENT)
 
 
 
 
-# Using MEAN SQUARE ERROR to compute loss
+
+def stochasticGradientDescent():
+    print("implement here")
+
+
+
+# Using SUM-SQUARE ERROR to compute loss (SUM of ALL (y-y0)^2)
 def loss(predicted, actual):
-    return
+    error = 0
+    for i in range(0, len(predicted)):
+        error = error + math.pow((predicted[i] - actual[i]), 2)
+    return error
 
 
 def get_training_data(image):  # left half of the image
     row = image.shape[0]
     column = int(image.shape[1] / 2)
-    print(column)
     train_rows = []
 
     for i in range(row):
@@ -170,17 +180,11 @@ def sigmoid_util(n):
     for i in range(size[0]):
         for j in range(size[1]):
             n[i][j] = 1.0 / (1.0 + math.exp(-n[i][j]))
-
-
     return n
 
 
 def sigmoid(num):
     return 1 / (1 + math.exp(-num))
-
-
-def stochasticGradientDescent():
-    print("implement here")
 
 
 def dotProduct(list1, list2):

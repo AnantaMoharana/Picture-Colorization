@@ -107,24 +107,32 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
 
         ## Compute the loss (error function) & learning rate
-        error = loss(outputLayer, actualColor)
+        loss = error(outputLayer, actualColor)
 
         ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT
-        
-        # work in progress
-        hiddenLayer1_weights = hiddenLayer1_weights - (learningRate * GRADIENT)
+
+        # linear models (Neural network) notes has the equation, i just cant read it
+
+        bias_grad = (-2/(len(actualValues)-1)) * loss
+        hiddenLayer1_bias = hiddenLayer1_bias - (learningRate * bias_grad)
+
+        weight_grad = (-2/(len(actualValues)-1)) * loss
+        hiddenLayer1_weights = hiddenLayer1_weights - (learningRate * weight_grad)
 
 
 
 
 
-def stochasticGradientDescent():
-    print("implement here")
+        print(math.sqrt(loss))
+
+
+
+
 
 
 
 # Using SUM-SQUARE ERROR to compute loss (SUM of ALL (y-y0)^2)
-def loss(predicted, actual):
+def error(predicted, actual):
     error = 0
     for i in range(0, len(predicted)):
         error = error + math.pow((predicted[i] - actual[i]), 2)

@@ -181,7 +181,55 @@ def sigmoid_deriv_util(n):
 
 def sigmoid_derivative(n):
 
+
     return sigmoid(n)*(1-sigmoid(n))
+
+    ## Parameters for training, feel free to edit to tune the model
+    epochs = 1000
+    w0 = .2
+    learningRate = .01
+
+    # NOW TRAIN
+    for iteration in range(epochs):
+
+        ## GRAB A RANDOM SAMPLE AKA 'Stochastic'
+        rand = random.randint(0, len(actualValues)-1)
+
+        ## Fetch the input patches:
+        inputLayer = np.array(patches[rand])
+
+        ## Grab the resulting middle color (actual)
+        actualColor = actualValues[rand]
+
+        ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
+        hiddenLayer = sumTwoLists(np.matmul(inputLayer, inWeights), inBias)
+        hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
+        outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, outWeights), outBias)
+        outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
+
+        ## Compute the loss (A.K.A cost)
+        loss = cost(outputLayer, actualColor)
+
+        ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT TODO: ERROR LIES HERE. WHAT ARE THE CALCULATIONS FOR THESE GRADIENTS?
+
+
+        gradients = 2 * inputLayer.T.dot(inputLayer.dot(w0) - outputLayer)
+        w0 = w0 - learningRate * gradients
+
+
+
+        inBias = w0
+        outBias = w0
+        inWeights = w0
+        outWeights = w0
+
+
+
+        ## Loss: should minimize with increasing epochs
+        print("Loss: ", loss, " epoch:", iteration)
+
+
+
 
 
 def gradient(x):
@@ -193,7 +241,7 @@ def cost(predicted, actual):
     error = 0
     for i in range(0, len(predicted)):
         error = error + math.pow((predicted[i] - actual[i]), 2)
-    return error
+    return error/len(predicted)
 
 
 def get_training_data(image):  # left half of the image

@@ -91,7 +91,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     ## Parameters for training, feel free to edit to tune the model
     epochs = 1000
     w0 = .2
-    learningRate = .07
+    learningRate = .01
 
     # NOW TRAIN
     for iteration in range(epochs):
@@ -111,21 +111,22 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, outWeights), outBias)
         outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
 
-        ## Compute the loss (error function) & learning rate
-        loss = error(outputLayer, actualColor)
+        ## Compute the loss (A.K.A cost)
+        loss = cost(outputLayer, actualColor)
 
         ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT TODO: ERROR LIES HERE. WHAT ARE THE CALCULATIONS FOR THESE GRADIENTS?
-        inWeightGrad = 0
-        outWeightGrad = 0
-
-        inBiasGrad = 0
-        outBiasGrad = 0
 
 
-        inBias = inBias - (learningRate * inBiasGrad)
-        outBias = outBias - (learningRate * outBiasGrad)
-        inWeights = inWeights - (learningRate * inWeightGrad)
-        outWeights = outWeights - (learningRate * outWeightGrad)
+        gradients = 2 * inputLayer.T.dot(inputLayer.dot(w0) - outputLayer)
+        w0 = w0 - learningRate * gradients
+
+
+
+        inBias = w0
+        outBias = w0
+        inWeights = w0
+        outWeights = w0
+
 
 
         ## Loss: should minimize with increasing epochs
@@ -134,20 +135,16 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 
 
-
-
-
-
-
-
+def gradient(x):
+    return sigmoid(x) * (1 - sigmoid(x))
 
 
 # Using SUM-SQUARE ERROR to compute loss (SUM of ALL (y-y0)^2)
-def error(predicted, actual):
+def cost(predicted, actual):
     error = 0
     for i in range(0, len(predicted)):
         error = error + math.pow((predicted[i] - actual[i]), 2)
-    return error
+    return error/len(predicted)
 
 
 def get_training_data(image):  # left half of the image

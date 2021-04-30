@@ -82,18 +82,20 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             actualValues.append([leftHalfColor[x][y][0]/255,leftHalfColor[x][y][1]/255,leftHalfColor[x][y][2]/255])
 
             ## Add the squares to our input layers:
-            patches.append([
+            patches=[
                 [upperLeft[0] / 255, upperMid[0] / 255, upperRight[0] / 255, midLeft[0] / 255, midRight[0] / 255, lowerRight[0] / 255, lowerMid[0] / 255, lowerLeft[0] / 255, mid[0] / 255],
                  [upperLeft[1] / 255, upperMid[1] / 255, upperRight[1] / 255, midLeft[1] / 255, midRight[1] / 255, lowerRight[1] / 255, lowerMid[1] / 255, lowerLeft[1] / 255, mid[1] / 255],
                  [upperLeft[2] / 255, upperMid[2] / 255, upperRight[2] / 255, midLeft[2] / 255, midRight[2] / 255, lowerRight[2] / 255, lowerMid[2] / 255, lowerLeft[2] / 255, mid[2] / 255]
-            ])
+            ]
 
             patches=np.array(patches)
             actualValues=np.array(actualValues)
 
-            layer1_weights=np.random.randn(patches.size[0], patches.size[1])
+            patch_size=patches.shape
 
-            layer2_weights=np.random.randn(actualValues.size[0], actualValues[1])
+            layer1_weights=np.random.rand(patches.shape[1], patches.shape[0])
+
+            layer2_weights=np.random.rand(actualValues.shape[0], actualValues.shape[1])
 
             epochs=10000
 

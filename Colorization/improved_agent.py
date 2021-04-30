@@ -5,6 +5,8 @@ import random
 
 
 def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
+
+
     # Get size values for easy access
     rightHalfSize = rightHalfGrey.shape
     rightRows = len(rightHalfGrey[0])
@@ -52,7 +54,8 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
     ##LAYER3: OUTPUT LAYER
     outputLayer = np.array(
-        [0, 0, 0]
+       # [0, 0, 0]
+       [[0], [0], [0]]
     )
 
 
@@ -76,7 +79,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             mid = leftHalfGrey[x][y]
 
             ## Find our middle COLOR pixel to train with
-            actualValues.append(leftHalfColor[x][y])
+            actualValues.append([leftHalfColor[x][y][0]/255,leftHalfColor[x][y][1]/255,leftHalfColor[x][y][2]/255])
 
             ## Add the squares to our input layers:
             patches.append([
@@ -85,65 +88,108 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
                  [upperLeft[2] / 255, upperMid[2] / 255, upperRight[2] / 255, midLeft[2] / 255, midRight[2] / 255, lowerRight[2] / 255, lowerMid[2] / 255, lowerLeft[2] / 255, mid[2] / 255]
             ])
 
+            patches=np.array(patches)
+            actualValues=np.array(actualValues)
+
+            layer1_weights=np.random.randn(patches.size[0], patches.size[1])
+
+            layer2_weights=np.random.randn(actualValues.size[0], actualValues[1])
+
+            epochs=10000
 
 
+            for i in range(epochs):
 
-    ## Parameters for training, feel free to edit to tune the model
-    epochs = 1000
-    w0 = .2
-    learningRate = .07
+                #dot product of the patch values and the first set of weights
+                first_dot=np.dot(patches,layer1_weights)
+                #use sigmoid activation 
+                activated=sigmoid_util(first_dot)
+                #take the dot product of activated anf second layer of wights
+                second_dot=np.dot(activated,layer2_weights)
 
-    # NOW TRAIN
-    for iteration in range(epochs):
+                output=sigmoid_util(second_dot)
 
-        ## GRAB A RANDOM SAMPLE AKA 'Stochastic'
-        rand = random.randint(0, len(actualValues)-1)
+                #backward propagation time
 
-        ## Fetch the input patches:
-        inputLayer = np.array(patches[rand])
+                output_error=actualValues-output
 
-        ## Grab the resulting middle color (actual)
-        actualColor = actualValues[rand]
+                output_s=output_error*sigmoid_deriv_util(output)
 
-        ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
-        hiddenLayer = sumTwoLists(np.matmul(inputLayer, inWeights), inBias)
-        hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
-        outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, outWeights), outBias)
-        outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
+                weights_error=np.dot(output_s,layer2_weights.T)
 
-        ## Compute the loss (error function) & learning rate
-        loss = error(outputLayer, actualColor)
+                #derivative of signoid to z2 error 
+                sigmoid_error=weights_error*sigmoid_deriv_util(activated)
 
-        ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT TODO: ERROR LIES HERE. WHAT ARE THE CALCULATIONS FOR THESE GRADIENTS?
-        inWeightGrad = 0
-        outWeightGrad = 0
+                layer1_weights+=np.dot(patches.T, sigmoid_error)
 
-        inBiasGrad = 0
-        outBiasGrad = 0
+                layer2_weights+=np.dot(layer2_weights.T, output_s)
+#
+#
+#
+#
+    ### Parameters for training, feel free to edit to tune the model
+    #epochs = 1000
+    #w0 = .2
+    #learningRate = .01
+#
+    ## NOW TRAIN
+    #for iteration in range(epochs):
+#
+    #    ## GRAB A RANDOM SAMPLE AKA 'Stochastic'
+    #    rand = random.randint(0, len(actualValues)-1)
+#
+    #    ## Fetch the input patches:
+    #    inputLayer = np.array(patches[rand])
+#
+    #    ## Grab the resulting middle color (actual)
+    #    actualColor = actualValues[rand]
+#
+    #    ## Now train, we want to associate the surrounding B&W pixels with a color pixel.
+    #    hiddenLayer = sumTwoLists(np.matmul(inputLayer, inWeights), inBias)
+    #    hiddenlayerWithActivation = sigmoid_util(hiddenLayer)
+    #    outputLayer = sumTwoLists(np.matmul(hiddenlayerWithActivation, outWeights), outBias)
+    #    outputLayer = [sigmoid(outputLayer[0]), sigmoid(outputLayer[1]), sigmoid(outputLayer[2])]
+#
+    #    ## Compute the loss (A.K.A cost)
+    #    loss = cost(outputLayer, actualColor)
+#
+    #    ## NOW TIME FOR STOCHASTIC GRADIENT DESCENT TODO: ERROR LIES HERE. WHAT ARE THE CALCULATIONS FOR THESE GRADIENTS?
+#
+#
+    #    gradients = 2 * inputLayer.T.dot(inputLayer.dot(w0) - outputLayer)
+    #    w0 = w0 - learningRate * gradients
+#
+#
+#
+    #    inBias = w0
+    #    outBias = w0
+    #    inWeights = w0
+    #    outWeights = w0
+#
+#
+#
+    #    ## Loss: should minimize with increasing epochs
+    #    print("Loss: ", loss, " epoch:", iteration)
+#
+#
+def sigmoid_deriv_util(n):
+    size = n.shape
+    for i in range(size[0]):
+        for j in range(size[1]):
+            sigmoid_derivative(n[i][j])
+    return n  
+
+def sigmoid_derivative(n):
+
+    return sigmoid(n)*(1-sigmoid(n))
 
 
-        inBias = inBias - (learningRate * inBiasGrad)
-        outBias = outBias - (learningRate * outBiasGrad)
-        inWeights = inWeights - (learningRate * inWeightGrad)
-        outWeights = outWeights - (learningRate * outWeightGrad)
-
-
-        ## Loss: should minimize with increasing epochs
-        print("Loss: ", loss, " epoch:", iteration)
-
-
-
-
-
-
-
-
-
-
+def gradient(x):
+    return sigmoid(x) * (1 - sigmoid(x))
 
 
 # Using SUM-SQUARE ERROR to compute loss (SUM of ALL (y-y0)^2)
-def error(predicted, actual):
+def cost(predicted, actual):
     error = 0
     for i in range(0, len(predicted)):
         error = error + math.pow((predicted[i] - actual[i]), 2)
@@ -220,7 +266,7 @@ def sumTwoLists(list1, list2):
 
 
 if __name__ == '__main__':
-    image = io.imread('nasa.jpeg')
+    image = io.imread('flowerpic.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
 
     training_data = get_training_data(image)
@@ -231,4 +277,3 @@ if __name__ == '__main__':
 
     # Run the improved agent code
     improved_agent(training_data, leftHalfGreyScale, testing_data)
-

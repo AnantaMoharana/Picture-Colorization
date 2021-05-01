@@ -79,7 +79,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             mid = leftHalfGrey[x][y]
 
             ## Find our middle COLOR pixel to train with
-            actualValues.append([leftHalfColor[x][y][0]/255,leftHalfColor[x][y][1]/255,leftHalfColor[x][y][2]/255])
+            actualValues=[leftHalfColor[x][y][0],leftHalfColor[x][y][1],leftHalfColor[x][y][2]]
 
             ## Add the squares to our input layers:
             patches=[
@@ -95,7 +95,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
             layer1_weights=np.random.rand(patches.shape[1], patches.shape[0])
 
-            layer2_weights=np.random.rand(actualValues.shape[0], actualValues.shape[1])
+            layer2_weights=np.random.rand(actualValues.shape[1], actualValues.shape[1])
 
             epochs=10000
 
@@ -107,6 +107,8 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
                 #use sigmoid activation 
                 activated=sigmoid_util(first_dot)
                 #take the dot product of activated anf second layer of wights
+                print(activated.shape)
+                print(layer2_weights.shape)
                 second_dot=np.dot(activated,layer2_weights)
 
                 output=sigmoid_util(second_dot)

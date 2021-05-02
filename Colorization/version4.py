@@ -14,54 +14,29 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     weights1=np.random.normal(0,0.5,(9, 3))
 
     weights2=np.random.normal(0,0.5,(3, 3))
-    error1=math.inf
-    for i in range(10000):
+
+
+    for _ in range(1500):
         training_outputs=[]
         actual_vals=[]
+        training_values=[]
         for training in training_set:
 
-            training_input=training[0]
-            training_input=training_input#/np.amax(training_input, axis=0) # "normlaize teh training data"
-            #X = X/np.amax(X, axis=0) #maximum of X array
-            #y = y/100
+            input_layer=training[0]
 
-            goal=training[1]/255
+            actual_value=training[1]/255
 
-            actual_vals.append(goal)
+            z,z2,z3,z4forward_propagation(input_layer, weights1,weights2)
 
 
+        
+    #print("Progress")
 
-            first_layer, output=forward_propagation(training_input, weights1, weights2)
 
-            training_outputs.append(output)
 
-            #get help from soham to werify #this part needs work 
-        backward_propragation(output, goal, weights1, weights2, training_input, first_layer)
+        
 
-            #print(weights1)
 
-        #backpropagation time 
-
-        #output_error=np.sum((goal-training_outputs)**2)/len(goal)
-#
-        #output_delta=output_error*sigmoid_derivative(output)
-#
-        #l2_error=np.dot(output_delta,weights2.T)
-        #l2_delta=l2_error*sigmoid_derivative(sigmoid(first_layer))
-#
-        #weights1+=np.dot(training_input.T,l2_delta)
-        #weights2+=np.dot()
-
-        #print()
-        error=np.sum((goal-training_outputs)**2)
-        print("Error:",error, i)
-        if error>error1:
-            break
-        error1=error
-        print()
-        #print(output[0])
-
-    colorpic(rightHalfGrey, weights1, weights2)
 
 
 
@@ -70,39 +45,26 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 def forward_propagation(inputs, weights1, weights2):
 
-    layer1=np.dot(inputs,weights1) #weights1+bias
-    layer1=sigmoid(layer1)
+    z=np.dot(inputs,weights1)
 
-    layer2=np.dot(layer1,weights2) 
-    output=sigmoid(layer2)
+    z2=sigmoid(z)
 
-    return layer1, output
+    z3=np.dot(z2,weights2)
 
+    output=sigmoid(z3)
 
-    #print("Progress")bias1
-
-
-def backward_propragation(output, actual,weights1,weights2,training_input,first_layer):
-
-    loss_derivative2=(2*(actual-output)*sigmoid_derivative(output))
-
-    change_weight2=np.dot(first_layer.T,loss_derivative2)
-
-    change_weight1=np.dot(training_input.T, (np.dot(2*(actual-output)*sigmoid_derivative(output), weights2.T )* sigmoid_derivative(first_layer)))
-
-    weights2+=0.003*change_weight2
-
-    weights1+=0.003*change_weight1
+    return  z, z2, z3, output
 
 
-
-
-
-
-    
 
 
     #print("Progress")
+
+def backward_propragation():
+
+
+
+
 
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
@@ -133,7 +95,9 @@ def get_model_training_set(color,leftHalfGrey):
 
             actual=color[x][y]
             patches=[
-                [upperLeft[0] /255, upperMid[0] /255, upperRight[0] /255, midLeft[0] /255, midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ]
+                [upperLeft[0] /255, upperMid[0] /255, upperRight[0] /255, midLeft[0] /255, midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ],
+                 [upperLeft[1]/255 , upperMid[1]/255 , upperRight[1]/255 , midLeft[1]/255 , midRight[1]/255 , lowerRight[1]/255 , lowerMid[1]/255 , lowerLeft[1]/255 , mid[1]/255 ],
+                 [upperLeft[2] /255, upperMid[2] /255, upperRight[2] /255, midLeft[2] /255, midRight[2] /255, lowerRight[2] /255, lowerMid[2] /255, lowerLeft[2] /255, mid[2]/255 ]
             ]
 
             training_set.append((np.array(patches),np.array(actual)))
@@ -183,7 +147,7 @@ def set_to_grey_scale(image_data):  # de-color an image
 
             RGB = int((.21 * red) + (.72 * green) + (.07 * blue))
 
-            image_data[i][j] = RGB
+            image_data[i][j] = [RGB, RGB, RGB]
 
 def colorpic(rightHalfGrey,weights1,weights2):
     for x in range(1, rightHalfGrey.shape[0]-1):
@@ -215,10 +179,13 @@ def colorpic(rightHalfGrey,weights1,weights2):
     io.imshow(rightHalfGrey)
     io.show()        
 
-
+#def weight_derivative(actual, predicted,training_set):
+    #return -2*np.dot(training_set,np.sum(np.subtract(actual,predicted)))/len(predicted)
 
 if __name__ == '__main__':
-    image = io.imread('flower3test.jpg')
+
+
+    image = io.imread('40x40flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
 
     training_data = get_training_data(image)

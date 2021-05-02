@@ -14,94 +14,95 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     weights1=np.random.normal(0,0.5,(9, 3))
 
     weights2=np.random.normal(0,0.5,(3, 3))
-    for i in range(5000):
+
+    bias1=np.random.normal(0,0.5,(3, 3))
+
+    bias2=np.random.normal(0,0.5,(3, 3))
+    for _ in range(1500):
         training_outputs=[]
         actual_vals=[]
+        training_values=[]
         for training in training_set:
 
-            training_input=training[0]
-            training_input=training_input#/np.amax(training_input, axis=0) # "normlaize teh training data"
-            #X = X/np.amax(X, axis=0) #maximum of X array
-            #y = y/100
+            inputs=training[0]
+            training_values.append(inputs)
+            actual_vals.append([training[1],training[1],training[1]])
 
-            goal=training[1]/255
+            #print(training[1].shape)
+            #print(training[0].shape)
 
-            actual_vals.append(goal)
+            layer1, layer2, output=forward_propagation(inputs, weights1, weights2, bias1, bias2)
+
+            training_outputs.append(np.array(output))
 
 
 
-            first_layer, output=forward_propagation(training_input, weights1, weights2)
+        print(np.array(actual_vals).shape)
+        print(np.array(training_outputs).shape)
+        print("Error: ", np.sum(np.square(np.subtract(training_outputs,actual_vals)))/len(training_outputs))
 
-            training_outputs.append(output)
+        backward_propragation(training_outputs, actual_vals, weights1, weights2, np.array(training_values), layer1, bias1, bias2)
+        
+    #print("Progress")
 
-            #get help from soham to werify #this part needs work 
-        backward_propragation(output, goal, weights1, weights2, training_input, first_layer)
 
-            #print(weights1)
 
-        #backpropagation time 
-
-        #output_error=np.sum((goal-training_outputs)**2)/len(goal)
-#
-        #output_delta=output_error*sigmoid_derivative(output)
-#
-        #l2_error=np.dot(output_delta,weights2.T)
-        #l2_delta=l2_error*sigmoid_derivative(sigmoid(first_layer))
-#
-        #weights1+=np.dot(training_input.T,l2_delta)
-        #weights2+=np.dot()
-
-        #print()
-        error=np.sum((goal-training_outputs)**2)/len(goal)
-        print("Error:",error, 1)
-        if error<2:
-            break
-
-        print()
-        #print(output[0])
-
-    colorpic(rightHalfGrey, weights1, weights2)
+        
 
 
 
 
 
 
-def forward_propagation(inputs, weights1, weights2):
 
-    layer1=np.dot(inputs,weights1) #weights1+bias
+
+def forward_propagation(inputs, weights1, weights2,bias1,bias2):
+
+    layer1=np.dot(inputs,weights1) + bias1 #weights1+bias
     layer1=sigmoid(layer1)
 
-    layer2=np.dot(layer1,weights2) 
+    layer2=np.dot(layer1,weights2) + bias2
     output=sigmoid(layer2)
 
-    return layer1, output
+    return layer1,layer2, output
 
 
-    #print("Progress")bias1
+    #print("Progress")
 
+def backward_propragation(output, actual,weights1,weights2,training_input,first_layer,bias1,bias2):
+    training_input2=[]
+    for train in training_input:
+       # print(train.shape)
+        train=train.T
+        training_input2.append(train)
+        #print(train.shape)
+    training_input2=np.array(training_input2)
+    #print(training_input2.shape)
+    #print(len(training_input2))
 
-def backward_propragation(output, actual,weights1,weights2,training_input,first_layer):
+    dW=-2*np.sum(np.dot(training_input2,(np.subtract(actual,output))))/len(training_input)
 
-    loss_derivative2=(2*(actual-output)*sigmoid_derivative(output))
+    db=-2*np.sum((np.subtract(actual,output)))/len(training_input)
 
-    change_weight2=np.dot(first_layer.T,loss_derivative2)
+    weights1=weights1-0.003*dW
 
-    change_weight1=np.dot(training_input.T, (np.dot(2*(actual-output)*sigmoid_derivative(output), weights2.T )* sigmoid_derivative(first_layer)))
+    weights2=weights2-0.003*dW
 
-    weights2+=0.003*change_weight2
+    bias1=bias1+bias1*db
 
-    weights1+=0.003*change_weight1
-
-
-
-
+    bias2=bias2+bias2*db
 
 
     
 
 
-    #print("Progress")
+
+
+
+    print("Progress")
+
+
+
 
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
@@ -216,9 +217,12 @@ def colorpic(rightHalfGrey,weights1,weights2):
     io.imshow(rightHalfGrey)
     io.show()        
 
-
+#def weight_derivative(actual, predicted,training_set):
+    #return -2*np.dot(training_set,np.sum(np.subtract(actual,predicted)))/len(predicted)
 
 if __name__ == '__main__':
+
+
     image = io.imread('40x40flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
 

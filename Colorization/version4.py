@@ -15,11 +15,11 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     weights1=np.random.normal(0,0.5,(5, 9)) 
 
     weights2=np.random.normal(0,0.5,(3, 5))
-    adj1_total = np.zeros((3,5),dtype = float)
-    adj2_total = np.zeros((5,9),dtype = float)
-    i=0
-    epochs=3000
+    weight1_change = np.zeros((3,5),dtype = float)
+    weight2_change = np.zeros((5,9),dtype = float)
+    epochs=1000
     for e in range(epochs):
+        random.shuffle(training_set)
         total_error_sum=0
         for train in training_set:
 
@@ -39,23 +39,23 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
             #print(output.shape)
 
-            cost=np.sum(np.square(output,actual_output))
+            cost=np.sum(np.square(np.subtract(output,actual_output)))
             total_error_sum+=cost
             
             #compute the derivative between the output and hidden derivatives
             deriv1=output_hidden_derivative(hidden,output,actual_output,weights2)
-            adj1_total+=deriv1
-            deriv2=calc_cost_deriv_2(input_layer,hidden,output,actual_output,weights2,weights1)
-            adj2_total+=deriv2
+            weight1_change+=deriv1
+            deriv2=input_hidden_derivative(input_layer,hidden,output,actual_output,weights1,weights2)
+            weight2_change+=deriv2
         
         #print("Epoch :")
-        print("Epoch and Error:",e,total_error_sum)
+        print("Epoch and Error:",e,total_error_sum/(len(training_set)*3))
             
-        adj1_total=adj1_total * (1/len(training_set))
-        adj2_total=adj2_total * (1/len(training_set))
+        weight1_change=weight1_change * (1/len(training_set))
+        weight2_change=weight2_change * (1/len(training_set))
 
-        weights1=weights1 - 0.003*adj2_total
-        weights2=weights2 - 0.003*adj1_total
+        weights1=weights1 - 0.03*weight2_change
+        weights2=weights2 - 0.03*weight1_change
 
     colorpic(rightHalfGrey, weights1, weights2)
 
@@ -64,25 +64,33 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         #print("progress",i)
         #i+=1
 
-def input_hidden_derivative(input_layer,hidden,output,actual_output,weights1,weights2):
+def input_hidden_derivative(input_layer,hidden,output,actual_output,weight1,weight2):
 
-    sigmoid_wight1_and_intput=sigmoid_derivative(np.dot(weights1,input_layer.T))
+    sigmoid_derivative_in_W = sigmoid_derivative(np.dot(weight1,np.transpose(input_layer))) #da/dw term: this makes a 5x1 matrix
+    product = np.dot(sigmoid_derivative_in_W, input_layer) #da/dw w chain rule: this makes a 5x9
 
-    part1=np.dot(sigmoid_wight1_and_intput,input_layer)
 
-    sumation= 2*np.subtract(output,actual_output)*sigmoid_derivative(np.dot(weights2,hidden))
+    sigprim=[]
+    sigprim.append(sigmoid_derivative(np.dot(weight2[0],hidden)))
+    sigprim.append(sigmoid_derivative(np.dot(weight2[1],hidden)))
+    sigprim.append(sigmoid_derivative(np.dot(weight2[2],hidden)))
+    sigprim=np.array(sigprim)
 
-    part2=np.dot(weights2.T,sumation)
+    x=np.diagonal(np.subtract(output,actual_output))
+    sums=[]
+    j=np.diagonal(2*x*sigprim)
+    Sum_q=np.sum((weight2.T*j).T,axis=0)
 
-    a = np.zeros((5, 5))
+    s2=np.zeros((5,5))
 
-    part2=np.fill_diagonal(a,part2)
+    np.fill_diagonal(s2,Sum_q)
 
-    part2=a
-
-    derivative=np.dot(part2,part1)
+    derivative=np.dot(s2,product)
 
     return derivative
+
+
+
 
     
 def output_hidden_derivative(hidden,output,actual_output,weights2):
@@ -252,7 +260,7 @@ if __name__ == '__main__':
 
     training_data = get_training_data(image)
     testing_data = get_testing_data(image)
-    print(testing_data[1][1])
+    print(training_data[1][1])
     set_to_grey_scale(testing_data)
 
     leftHalfGreyScale = np.copy(training_data)

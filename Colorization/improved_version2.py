@@ -188,6 +188,7 @@ def set_to_grey_scale(image_data):  # de-color an image
 def colorpic(rightHalfGrey,weights1,weights2):
     for x in range(1, rightHalfGrey.shape[0]-1):
         for y in range(1, rightHalfGrey.shape[1]-1):
+            
 
             midRight = rightHalfGrey[x + 1][y]
             midLeft = rightHalfGrey[x - 1][y]

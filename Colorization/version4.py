@@ -11,49 +11,103 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 
     #print("Progress")
-    weights1=np.random.normal(0,0.5,(9, 3))
+    #Initialize the weights using wah
+    weights1=np.random.normal(0,0.5,(5, 9)) 
 
-    weights2=np.random.normal(0,0.5,(3, 3))
-
-
-    for _ in range(1500):
-        training_outputs=[]
-        actual_vals=[]
-        training_values=[]
-        for training in training_set:
-
-            input_layer=training[0]
-
-            actual_value=training[1]/255
-
-            z,z2,z3,z4forward_propagation(input_layer, weights1,weights2)
+    weights2=np.random.normal(0,0.5,(3, 5))
+    adj1_total = np.zeros((3,5),dtype = float)
+    adj2_total = np.zeros((5,9),dtype = float)
+    i=0
+    epochs=3000
+    for e in range(epochs):
+        total_error_sum=0
+        for train in training_set:
 
 
+
+            input_layer=train[0]
+            
+
+            actual_output=[[train[1][0]/255],[train[1][1]/255],[train[1][2]/255]]
+            actual_output=np.array(actual_output)
+
+            #print(weights1.shape)
+            #print(weights2.shape)
+            #print(input_layer.shape)
+
+            hidden,output=forward_propagation(input_layer,weights1,weights2)
+
+            #print(output.shape)
+
+            cost=np.sum(np.square(output,actual_output))
+            total_error_sum+=cost
+            
+            #compute the derivative between the output and hidden derivatives
+            deriv1=output_hidden_derivative(hidden,output,actual_output,weights2)
+            adj1_total+=deriv1
+            deriv2=calc_cost_deriv_2(input_layer,hidden,output,actual_output,weights2,weights1)
+            adj2_total+=deriv2
         
-    #print("Progress")
+        #print("Epoch :")
+        print("Epoch and Error:",e,total_error_sum)
+            
+        adj1_total=adj1_total * (1/len(training_set))
+        adj2_total=adj2_total * (1/len(training_set))
+
+        weights1=weights1 - 0.003*adj2_total
+        weights2=weights2 - 0.003*adj1_total
+
+    colorpic(rightHalfGrey, weights1, weights2)
 
 
 
-        
+        #print("progress",i)
+        #i+=1
 
+def input_hidden_derivative(input_layer,hidden,output,actual_output,weights1,weights2):
 
+    sigmoid_wight1_and_intput=sigmoid_derivative(np.dot(weights1,input_layer.T))
 
+    part1=np.dot(sigmoid_wight1_and_intput,input_layer)
 
+    sumation= 2*np.subtract(output,actual_output)*sigmoid_derivative(np.dot(weights2,hidden))
 
+    part2=np.dot(weights2.T,sumation)
 
+    a = np.zeros((5, 5))
+
+    part2=np.fill_diagonal(a,part2)
+
+    part2=a
+
+    derivative=np.dot(part2,part1)
+
+    return derivative
+
+    
+def output_hidden_derivative(hidden,output,actual_output,weights2):
+    z=np.dot(weights2,hidden)
+    z=sigmoid_derivative(z)
+    z2=2*np.subtract(output,actual_output.T)
+    
+    dot=np.dot(z2,z)
+
+    derivative=np.dot(dot,hidden.T)
+
+    return derivative
 
 
 def forward_propagation(inputs, weights1, weights2):
 
-    z=np.dot(inputs,weights1)
+    z=np.dot(weights1,inputs.T)
 
-    z2=sigmoid(z)
+    hidden_layer=sigmoid(z)
 
-    z3=np.dot(z2,weights2)
+    z2=np.dot(weights2,hidden_layer)
 
-    output=sigmoid(z3)
+    output_layer=sigmoid(z2)
 
-    return  z, z2, z3, output
+    return  hidden_layer,output_layer
 
 
 
@@ -61,6 +115,7 @@ def forward_propagation(inputs, weights1, weights2):
     #print("Progress")
 
 def backward_propragation():
+    print("BackWard")
 
 
 
@@ -77,12 +132,18 @@ def sigmoid_derivative(x):
 
 
 def get_model_training_set(color,leftHalfGrey):
+    io.imshow(color)
+    io.show()   
+
+    io.imshow(leftHalfGrey)
+    io.show()   
+    print(color[1][1])
 
 
     training_set=[]
     for x in range(1, color.shape[0]-1):
         for y in range(1, color.shape[1]-1):
-
+            #z=leftHalfGrey[x-1:x+2,y-1:y+2].flatten()
             midRight = leftHalfGrey[x + 1][y]
             midLeft = leftHalfGrey[x - 1][y]
             upperMid = leftHalfGrey[x][y + 1]
@@ -94,10 +155,9 @@ def get_model_training_set(color,leftHalfGrey):
             mid = leftHalfGrey[x][y]
 
             actual=color[x][y]
+            #print(actual)
             patches=[
-                [upperLeft[0] /255, upperMid[0] /255, upperRight[0] /255, midLeft[0] /255, midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ],
-                 [upperLeft[1]/255 , upperMid[1]/255 , upperRight[1]/255 , midLeft[1]/255 , midRight[1]/255 , lowerRight[1]/255 , lowerMid[1]/255 , lowerLeft[1]/255 , mid[1]/255 ],
-                 [upperLeft[2] /255, upperMid[2] /255, upperRight[2] /255, midLeft[2] /255, midRight[2] /255, lowerRight[2] /255, lowerMid[2] /255, lowerLeft[2] /255, mid[2]/255 ]
+                [upperLeft[0] /255, upperMid[0] /255, upperRight[0] /255, midLeft[0] /255, midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ]
             ]
 
             training_set.append((np.array(patches),np.array(actual)))
@@ -145,16 +205,18 @@ def set_to_grey_scale(image_data):  # de-color an image
             green = pixel[1]
             blue = pixel[2]
 
-            RGB = int((.21 * red) + (.72 * green) + (.07 * blue))
+            RGB = (.21 * red) + (.72 * green) + (.07 * blue)
 
-            image_data[i][j] = [RGB, RGB, RGB]
+            image_data[i][j] = RGB
 
 def colorpic(rightHalfGrey,weights1,weights2):
+
+    #out=np.copy(rightHalfGrey)
     for x in range(1, rightHalfGrey.shape[0]-1):
         for y in range(1, rightHalfGrey.shape[1]-1):
 
-            midRight = rightHalfGrey[x + 1][y]
             midLeft = rightHalfGrey[x - 1][y]
+            midRight = rightHalfGrey[x + 1][y]
             upperMid = rightHalfGrey[x][y + 1]
             lowerMid = rightHalfGrey[x][y - 1]
             lowerRight = rightHalfGrey[x + 1][y + 1]
@@ -165,19 +227,19 @@ def colorpic(rightHalfGrey,weights1,weights2):
 
             #actual=color[x][y]
             patches=[
-                [upperLeft[0] /255 , upperMid[0]  /255, upperRight[0] /255, midLeft[0]/255 , midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ],
-                 [upperLeft[1] /255 , upperMid[1]  /255, upperRight[1] /255, midLeft[1]/255 , midRight[1] /255, lowerRight[1] /255, lowerMid[1] /255, lowerLeft[1] /255, mid[1]/255 ],
-                 [upperLeft[2] /255 , upperMid[2]  /255, upperRight[2] /255, midLeft[2]/255 , midRight[2] /255, lowerRight[2] /255, lowerMid[2] /255, lowerLeft[2] /255, mid[2]/255 ]
+                [upperLeft[0] /255 , upperMid[0]  /255, upperRight[0] /255, midLeft[0]/255 , midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ]
             ]
 
             first_layer, output=forward_propagation(np.array(patches), weights1, weights2)
 
-            rightHalfGrey[x][y]=output[0]*255
+            #out[x][y]=[int(output[0]*255),int(output[1]*255),int(output[2]*255)]
+            rightHalfGrey[x][y]=[int(output[0]*255),int(output[1]*255),int(output[2]*255)]
+            #print(rightHalfGrey[x][y])
 
             #training_set.append((np.array(patches),np.array(actual)))
-
+    
     io.imshow(rightHalfGrey)
-    io.show()        
+    io.show()         
 
 #def weight_derivative(actual, predicted,training_set):
     #return -2*np.dot(training_set,np.sum(np.subtract(actual,predicted)))/len(predicted)
@@ -190,6 +252,8 @@ if __name__ == '__main__':
 
     training_data = get_training_data(image)
     testing_data = get_testing_data(image)
+    print(testing_data[1][1])
+    set_to_grey_scale(testing_data)
 
     leftHalfGreyScale = np.copy(training_data)
     set_to_grey_scale(leftHalfGreyScale)

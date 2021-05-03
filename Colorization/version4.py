@@ -17,7 +17,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     weights2=np.random.normal(0,0.5,(3, 5))
     weight1_change = np.zeros((3,5),dtype = float)
     weight2_change = np.zeros((5,9),dtype = float)
-    epochs=1000
+    epochs=1100
     for e in range(epochs):
         random.shuffle(training_set)
         total_error_sum=0
@@ -54,8 +54,8 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         weight1_change=weight1_change * (1/len(training_set))
         weight2_change=weight2_change * (1/len(training_set))
 
-        weights1=weights1 - 0.03*weight2_change
-        weights2=weights2 - 0.03*weight1_change
+        weights1=weights1 - 0.01*weight2_change
+        weights2=weights2 - 0.01*weight1_change
 
     colorpic(rightHalfGrey, weights1, weights2)
 

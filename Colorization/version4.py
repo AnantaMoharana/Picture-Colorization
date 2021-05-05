@@ -3,155 +3,139 @@ from skimage import io, color
 import math
 import random
 
+
 def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
+    training_set = get_model_training_set(leftHalfColor, leftHalfGrey)
 
+    # print("Progress")
+    # Initialize the weights using wah
+    weights1 = np.random.randn(5, 9) * 2
 
-    training_set=get_model_training_set(leftHalfColor,leftHalfGrey)
-
-
-
-    #print("Progress")
-    #Initialize the weights using wah
-    weights1=np.random.normal(0,0.5,(5, 9)) 
-
-    weights2=np.random.normal(0,0.5,(3, 5))
-    weight1_change = np.zeros((3,5),dtype = float)
-    weight2_change = np.zeros((5,9),dtype = float)
-    epochs=1100
+    weights2 = np.random.randn(3, 5) * 2
+    weight1_change = np.zeros((3, 5), dtype=float)
+    weight2_change = np.zeros((5, 9), dtype=float)
+    epochs = 2500
     for e in range(epochs):
         random.shuffle(training_set)
-        total_error_sum=0
+        total_error_sum = 0
         for train in training_set:
+            input_layer = train[0]
+
+            actual_output = [[train[1][0] / 255], [train[1][1] / 255], [train[1][2] / 255]]
+            actual_output = np.array(actual_output)
+
+            # print(weights1.shape)
+            # print(weights2.shape)
+            # print(input_layer.shape)
+
+            hidden, output = forward_propagation(input_layer, weights1, weights2)
+
+            # print(output.shape)
+
+            cost = np.sum(np.square(np.subtract(output, actual_output)))
+            total_error_sum += cost
+
+            # compute the derivative between the output and hidden derivatives
+            deriv1 = output_hidden_derivative(hidden, output, actual_output, weights2)
+            weight1_change += deriv1
+            deriv2 = input_hidden_derivative(input_layer, hidden, output, actual_output, weights1, weights2)
+            weight2_change += deriv2
+
+        # print("Epoch :")
+        print("Epoch and Error:", e, total_error_sum / (len(training_set) * 3))
+
+        weight1_change = weight1_change * (1 / len(training_set))
+        weight2_change = weight2_change * (1 / len(training_set))
+
+        weights1 = weights1 - 0.09 * weight2_change
+        weights2 = weights2 - 0.09 * weight1_change
+
+        if e%100 == 0:
+
+            colorpic(leftHalfColor, rightHalfGrey, weights1, weights2)
+
+    # print("progress",i)
+    # i+=1
 
 
+def input_hidden_derivative(input_layer, hidden, output, actual_output, weight1, weight2):
+    sigmoid_derivative_in_W = sigmoid_derivative(
+        np.dot(weight1, np.transpose(input_layer)))  # da/dw term: this makes a 5x1 matrix
+    product = np.dot(sigmoid_derivative_in_W, input_layer)  # da/dw w chain rule: this makes a 5x9
 
-            input_layer=train[0]
-            
+    sigprim = []
+    sigprim.append(sigmoid_derivative(np.dot(weight2[0], hidden)))
+    sigprim.append(sigmoid_derivative(np.dot(weight2[1], hidden)))
+    sigprim.append(sigmoid_derivative(np.dot(weight2[2], hidden)))
+    sigprim = np.array(sigprim)
 
-            actual_output=[[train[1][0]/255],[train[1][1]/255],[train[1][2]/255]]
-            actual_output=np.array(actual_output)
+    x = np.diagonal(np.subtract(output, actual_output))
+    sums = []
+    j = np.diagonal(2 * x * sigprim)
+    Sum_q = np.sum((weight2.T * j).T, axis=0)
 
-            #print(weights1.shape)
-            #print(weights2.shape)
-            #print(input_layer.shape)
+    s2 = np.zeros((5, 5))
 
-            hidden,output=forward_propagation(input_layer,weights1,weights2)
+    np.fill_diagonal(s2, Sum_q)
 
-            #print(output.shape)
-
-            cost=np.sum(np.square(np.subtract(output,actual_output)))
-            total_error_sum+=cost
-            
-            #compute the derivative between the output and hidden derivatives
-            deriv1=output_hidden_derivative(hidden,output,actual_output,weights2)
-            weight1_change+=deriv1
-            deriv2=input_hidden_derivative(input_layer,hidden,output,actual_output,weights1,weights2)
-            weight2_change+=deriv2
-        
-        #print("Epoch :")
-        print("Epoch and Error:",e,total_error_sum/(len(training_set)*3))
-            
-        weight1_change=weight1_change * (1/len(training_set))
-        weight2_change=weight2_change * (1/len(training_set))
-
-        weights1=weights1 - 0.01*weight2_change
-        weights2=weights2 - 0.01*weight1_change
-
-    colorpic(rightHalfGrey, weights1, weights2)
-
-
-
-        #print("progress",i)
-        #i+=1
-
-def input_hidden_derivative(input_layer,hidden,output,actual_output,weight1,weight2):
-
-    sigmoid_derivative_in_W = sigmoid_derivative(np.dot(weight1,np.transpose(input_layer))) #da/dw term: this makes a 5x1 matrix
-    product = np.dot(sigmoid_derivative_in_W, input_layer) #da/dw w chain rule: this makes a 5x9
-
-
-    sigprim=[]
-    sigprim.append(sigmoid_derivative(np.dot(weight2[0],hidden)))
-    sigprim.append(sigmoid_derivative(np.dot(weight2[1],hidden)))
-    sigprim.append(sigmoid_derivative(np.dot(weight2[2],hidden)))
-    sigprim=np.array(sigprim)
-
-    x=np.diagonal(np.subtract(output,actual_output))
-    sums=[]
-    j=np.diagonal(2*x*sigprim)
-    Sum_q=np.sum((weight2.T*j).T,axis=0)
-
-    s2=np.zeros((5,5))
-
-    np.fill_diagonal(s2,Sum_q)
-
-    derivative=np.dot(s2,product)
+    derivative = np.dot(s2, product)
 
     return derivative
 
 
+def output_hidden_derivative(hidden, output, actual_output, weights2):
+    z = np.dot(weights2, hidden)
+    z = sigmoid_derivative(z)
+    z2 = 2 * np.subtract(output, actual_output.T)
 
+    dot = np.dot(z2, z)
 
-    
-def output_hidden_derivative(hidden,output,actual_output,weights2):
-    z=np.dot(weights2,hidden)
-    z=sigmoid_derivative(z)
-    z2=2*np.subtract(output,actual_output.T)
-    
-    dot=np.dot(z2,z)
-
-    derivative=np.dot(dot,hidden.T)
+    derivative = np.dot(dot, hidden.T)
 
     return derivative
 
 
 def forward_propagation(inputs, weights1, weights2):
+    z = np.dot(weights1, inputs.T)
 
-    z=np.dot(weights1,inputs.T)
+    hidden_layer = sigmoid(z)
 
-    hidden_layer=sigmoid(z)
+    z2 = np.dot(weights2, hidden_layer)
 
-    z2=np.dot(weights2,hidden_layer)
+    output_layer = sigmoid(z2)
 
-    output_layer=sigmoid(z2)
+    return hidden_layer, output_layer
 
-    return  hidden_layer,output_layer
+    # print("Progress")
 
-
-
-
-    #print("Progress")
 
 def backward_propragation():
     print("BackWard")
 
 
-
-
-
 def sigmoid(x):
-    return 1/(1 + np.exp(-x))
+    return 1 / (1 + np.exp(-x))
+
 
 def sigmoid_derivative(x):
-    f = 1/(1+np.exp(-x))
+    f = sigmoid(x)
     df = f * (1 - f)
     return df
-    #print("Progress")
+    # print("Progress")
 
 
-def get_model_training_set(color,leftHalfGrey):
+def get_model_training_set(color, leftHalfGrey):
     io.imshow(color)
-    io.show()   
+    io.show()
 
     io.imshow(leftHalfGrey)
-    io.show()   
+    io.show()
     print(color[1][1])
 
-
-    training_set=[]
-    for x in range(1, color.shape[0]-1):
-        for y in range(1, color.shape[1]-1):
-            #z=leftHalfGrey[x-1:x+2,y-1:y+2].flatten()
+    training_set = []
+    for x in range(1, color.shape[0] - 1):
+        for y in range(1, color.shape[1] - 1):
+            # z=leftHalfGrey[x-1:x+2,y-1:y+2].flatten()
             midRight = leftHalfGrey[x + 1][y]
             midLeft = leftHalfGrey[x - 1][y]
             upperMid = leftHalfGrey[x][y + 1]
@@ -162,18 +146,19 @@ def get_model_training_set(color,leftHalfGrey):
             lowerLeft = leftHalfGrey[x - 1][y + 1]
             mid = leftHalfGrey[x][y]
 
-            actual=color[x][y]
-            #print(actual)
-            patches=[
-                [upperLeft[0] /255, upperMid[0] /255, upperRight[0] /255, midLeft[0] /255, midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ]
+            actual = color[x][y]
+            # print(actual)
+            patches = [
+                [upperLeft[0] / 255, upperMid[0] / 255, upperRight[0] / 255, midLeft[0] / 255, midRight[0] / 255,
+                 lowerRight[0] / 255, lowerMid[0] / 255, lowerLeft[0] / 255, mid[0] / 255]
             ]
 
-            training_set.append((np.array(patches),np.array(actual)))
+            training_set.append((np.array(patches), np.array(actual)))
 
     return training_set
 
+    # print("Get Training")
 
-    #print("Get Training")
 
 def get_training_data(image):  # left half of the image
     row = image.shape[0]
@@ -217,12 +202,14 @@ def set_to_grey_scale(image_data):  # de-color an image
 
             image_data[i][j] = RGB
 
-def colorpic(rightHalfGrey,weights1,weights2):
 
-    #out=np.copy(rightHalfGrey)
-    for x in range(1, rightHalfGrey.shape[0]-1):
-        for y in range(1, rightHalfGrey.shape[1]-1):
+def colorpic(LEFTHALF_REAL, rightHalfGrey, weights1, weights2):
 
+    out=np.copy(rightHalfGrey)
+
+
+    for x in range(1, rightHalfGrey.shape[0] - 1):
+        for y in range(1, rightHalfGrey.shape[1] - 1):
             midLeft = rightHalfGrey[x - 1][y]
             midRight = rightHalfGrey[x + 1][y]
             upperMid = rightHalfGrey[x][y + 1]
@@ -233,29 +220,54 @@ def colorpic(rightHalfGrey,weights1,weights2):
             lowerLeft = rightHalfGrey[x - 1][y + 1]
             mid = rightHalfGrey[x][y]
 
-            #actual=color[x][y]
-            patches=[
-                [upperLeft[0] /255 , upperMid[0]  /255, upperRight[0] /255, midLeft[0]/255 , midRight[0] /255, lowerRight[0] /255, lowerMid[0] /255, lowerLeft[0] /255, mid[0]/255 ]
+            # actual=color[x][y]
+         #   patches = [
+               # [upperLeft[0] / 255, upperMid[0] / 255, upperRight[0] / 255, midLeft[0] / 255, midRight[0] / 255,
+               #  lowerRight[0] / 255, lowerMid[0] / 255, lowerLeft[0] / 255, mid[0] / 255]
+           # ]
+
+            patches = [
+                [upperRight[0]/255, upperMid[0]/255, upperLeft[0]/255, midRight[0]/255, midLeft[0]/255,
+                 lowerLeft[0]/255, lowerMid[0]/255, lowerRight[0]/255, mid[0]/255]
             ]
 
-            first_layer, output=forward_propagation(np.array(patches), weights1, weights2)
+            first_layer, output = forward_propagation(np.array(patches), weights1, weights2)
 
-            #out[x][y]=[int(output[0]*255),int(output[1]*255),int(output[2]*255)]
-            rightHalfGrey[x][y]=[int(output[0]*255),int(output[1]*255),int(output[2]*255)]
-            #print(rightHalfGrey[x][y])
+            # out[x][y]=[int(output[0]*255),int(output[1]*255),int(output[2]*255)]
+            out[x][y] = [int(output[0] * 255), int(output[1] * 255), int(output[2] * 255)]
+            # print(rightHalfGrey[x][y])
 
-            #training_set.append((np.array(patches),np.array(actual)))
-    
-    io.imshow(rightHalfGrey)
-    io.show()         
+            # training_set.append((np.array(patches),np.array(actual)))
 
-#def weight_derivative(actual, predicted,training_set):
-    #return -2*np.dot(training_set,np.sum(np.subtract(actual,predicted)))/len(predicted)
+
+    lw = out.shape
+
+    copycolumns = []
+    copyrows = []
+
+    for i in range(0, lw[0]):
+        copyrows = []
+        for j in range(0, lw[1]):
+            if lw[0] <= i or lw[1] <= j:
+                copyrows.append([0, 0, 0])
+            else:
+                copyrows.append(out[i][j])
+        copycolumns.append(copyrows)
+
+    copycolumns = np.array(copycolumns)
+
+    basic = np.concatenate((LEFTHALF_REAL, copycolumns), axis=1)
+
+    io.imshow(basic)
+    io.show()
+
+
+
+# def weight_derivative(actual, predicted,training_set):
+# return -2*np.dot(training_set,np.sum(np.subtract(actual,predicted)))/len(predicted)
 
 if __name__ == '__main__':
-
-
-    image = io.imread('40x40flower.jpg')
+    image = io.imread('super_small_flower.jpg')
     image = color.convert_colorspace(image, 'RGB', 'RGB')
 
     training_data = get_training_data(image)

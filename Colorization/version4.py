@@ -54,8 +54,6 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
             colorpic(leftHalfColor, rightHalfGrey, weights1, weights2)
 
-    # print("progress",i)
-    # i+=1
 
 
 def input_hidden_derivative(input_layer, hidden, output, actual_output, weight1, weight2):

@@ -27,9 +27,6 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
             training_values.append(inputs)
             actual_vals.append([training[1],training[1],training[1]])
 
-            #print(training[1].shape)
-            #print(training[0].shape)
-
             layer1, layer2, output=forward_propagation(inputs, weights1, weights2, bias1, bias2)
 
             training_outputs.append(np.array(output))

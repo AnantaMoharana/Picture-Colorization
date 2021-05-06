@@ -10,7 +10,6 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 
 
-    #print("Progress")
     weights1=np.random.normal(0,0.5,(9, 3))
 
     weights2=np.random.normal(0,0.5,(3, 3))

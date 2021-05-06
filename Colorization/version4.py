@@ -30,7 +30,6 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
             hidden, output = forward_propagation(input_layer, weights1, weights2)
 
-            # print(output.shape)
 
             cost = np.sum(np.square(np.subtract(output, actual_output)))
             total_error_sum += cost

@@ -6,7 +6,6 @@ import random
 
 def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
-
     # Get size values for easy access
     rightHalfSize = rightHalfGrey.shape
     rightRows = len(rightHalfGrey[0])

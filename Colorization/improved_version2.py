@@ -9,7 +9,6 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
     training_set=get_model_training_set(leftHalfColor,leftHalfGrey)
 
 
-
     #print("Progress")
     weights1=np.random.normal(0,0.5,(9, 3))
 

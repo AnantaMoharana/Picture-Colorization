@@ -6,7 +6,7 @@ import random
 def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
 
 
-    training_set=get_model_training_set(leftHalfColor,leftHalfGrey)
+    training_set=get_model_training_set(leftHalfColor,leftHalfGrey) 
 
 
     #print("Progress")

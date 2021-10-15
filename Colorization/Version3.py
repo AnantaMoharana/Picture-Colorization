@@ -226,7 +226,7 @@ if __name__ == '__main__':
     testing_data = get_testing_data(image)
 
     leftHalfGreyScale = np.copy(training_data)
-    set_to_grey_scale(leftHalfGreyScale)
+    set_to_grey_scale(leftHalfGreyScale) 
 
     # Run the improved agent code
     improved_agent(training_data, leftHalfGreyScale, testing_data)

@@ -26,7 +26,7 @@ def improved_agent(leftHalfColor, leftHalfGrey, rightHalfGrey):
         [0, 0, 0, 0, 0, 0, 0, 0, 0]]
     )
 
-    ##LAYER2: HIDDEN LAYER IN BIAS
+    ##LAYER2: HIDDEN LAYER IN BIAS 
     inBias = np.array(
         [random.random(),random.random(),random.random()]
     )
